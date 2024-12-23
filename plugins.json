@@ -1,0 +1,21 @@
+[
+    {
+        "iconUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Korduene_Logo.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 16790,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "Cloudburst"
+        ],
+        "tvTypes": [
+            "Movie"
+        ],
+        "version": -1,
+        "internalName": "AnimeSama",
+        "description": "Lorem ipsum",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/AnimeSama.cs3",
+        "name": "AnimeSama"
+    }
+]
