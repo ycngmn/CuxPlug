@@ -1,0 +1,8 @@
+{
+  "name": "CuxPlug",
+  "description": "International plugins developped from interest and fun",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/builds/plugins.json"
+  ]
+}
