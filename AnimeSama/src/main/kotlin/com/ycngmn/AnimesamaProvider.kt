@@ -269,7 +269,7 @@ class AnimesamaProvider : MainAPI() {
         if (request.isSuccessful) {
 
             val doc = request.document
-            val epiKey = doc.selectFirst("#sousBlocMilieu script").toString()
+            val epiKey = doc.selectFirst("#sousBlocMiddle script").toString()
             val re = Regex("""<script[^>]*src=['"]([^'"]*episodes\.js\?filever=\d+)['"][^>]*>""")
             val episodeKey = re.find(epiKey)?.groupValues?.get(1)
             val rawLinks = app.get(
