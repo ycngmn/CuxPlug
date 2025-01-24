@@ -46,8 +46,7 @@ jobs:
           cd $GITHUB_WORKSPACE/src
           chmod +x gradlew
           ./gradlew make makePluginsJson
-          find . -name '*.cs3' -exec cp --parents {} $GITHUB_WORKSPACE/builds \;
-          find . -name '*.js' -exec cp --parents {} $GITHUB_WORKSPACE/builds \;
+          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds
           cp build/plugins.json $GITHUB_WORKSPACE/builds
 
       - name: Push builds branch
