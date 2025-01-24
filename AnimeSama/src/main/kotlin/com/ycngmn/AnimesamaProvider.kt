@@ -1,7 +1,7 @@
 package com.ycngmn
 
 
-/* import android.util.Log */
+import android.util.Log
 import com.lagradost.cloudstream3.DubStatus
 import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
