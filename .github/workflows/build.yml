@@ -1,6 +1,5 @@
 name: Build
 
-# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#concurrency
 concurrency: 
   group: "build"
   cancel-in-progress: true
@@ -8,7 +7,6 @@ concurrency:
 on:
   push:
     branches:
-      # choose your default branch
       - master
       - main
     paths-ignore:
@@ -18,23 +16,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
+      - name: Checkout source code
+        uses: actions/checkout@v3
         with:
           path: "src"
 
-      - name: Checkout builds
-        uses: actions/checkout@master
+      - name: Checkout builds branch
+        uses: actions/checkout@v3
         with:
           ref: "builds"
           path: "builds"
       
-      - name: Clean old builds
-        run: rm $GITHUB_WORKSPACE/builds/*.cs3 || true
-
+      - name: Clean builds branch
+        run: |
+          cd $GITHUB_WORKSPACE/builds
+          rm -rf *
+      
       - name: Setup JDK 17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
+          distribution: 'temurin'
           java-version: 17
 
       - name: Setup Android SDK
@@ -45,14 +46,15 @@ jobs:
           cd $GITHUB_WORKSPACE/src
           chmod +x gradlew
           ./gradlew make makePluginsJson
-          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds
+          find . -name '*.cs3' -exec cp --parents {} $GITHUB_WORKSPACE/builds \;
+          find . -name '*.js' -exec cp --parents {} $GITHUB_WORKSPACE/builds \;
           cp build/plugins.json $GITHUB_WORKSPACE/builds
 
-      - name: Push builds
+      - name: Push builds branch
         run: |
           cd $GITHUB_WORKSPACE/builds
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add .
-          git commit --amend -m "Build $GITHUB_SHA" || exit 0   # do not error if nothing to commit
+          git commit --amend -m "Build $GITHUB_SHA" || exit 0
           git push --force
