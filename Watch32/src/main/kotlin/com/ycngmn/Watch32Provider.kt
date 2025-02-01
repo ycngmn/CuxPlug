@@ -46,7 +46,7 @@ class Watch32Provider : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest
     ): HomePageResponse {
-        val doc = app.get("$mainUrl/${request.data}?page=$page").document
+        val doc = app.get("$mainUrl/${request.data}?page=$page", cacheTime = 60, timeout = 20).document
         val home = doc.select(".film_list-wrap .flw-item").mapNotNull { toResult(it) }
 
         return newHomePageResponse(
@@ -134,15 +134,15 @@ class Watch32Provider : MainAPI() {
 
 
 
-        var web = app.get(url).document
+        var web = app.get(url, cacheTime = 60, timeout = 30).document
         val dataId = web.selectFirst(".detail_page-watch")?.attr("data-id")
 
 
         if (type == TvType.TvSeries) {
-            web = app.get("$mainUrl/ajax/season/list/$dataId").document
+            web = app.get("$mainUrl/ajax/season/list/$dataId", cacheTime = 60, timeout = 30).document
             for ((numSeason, season) in web.select("a").withIndex()) {
                 val seasonId = season.attr("data-id")
-                web = app.get("$mainUrl/ajax/season/episodes/$seasonId").document
+                web = app.get("$mainUrl/ajax/season/episodes/$seasonId", cacheTime = 60, timeout = 30).document
 
                 var numEpi = 0
                 episodes += web.select(".nav-item").map {
@@ -197,10 +197,11 @@ class Watch32Provider : MainAPI() {
         for (vidDataId in vidDataIds.reversed()) {
 
             val vidId = vidDataId.attr("data-id") // example :10914034
-            val www = app.get("$mainUrl/ajax/episode/sources/$vidId")
+            val www = app.get("$mainUrl/ajax/episode/sources/$vidId", cacheTime = 60, timeout = 30)
             val link = JSONObject(www.text).getString("link")
             val req =
-                app.get("https://ycngmn.fr/api/extract?url=$link&referrer=$mainUrl/")
+                app.get("https://ycngmn.fr/api/onstream/extract?url=$link&referrer=$mainUrl/")
+
             val m3u8 = JSONObject(req.text).getJSONArray("sources")
                 .getJSONObject(0).getString("file")
 
@@ -217,31 +218,6 @@ class Watch32Provider : MainAPI() {
                     )
                 )
             }
-
-
-            /*
-            I could directly have called Extractor without parsing the m3u8 url.
-            But from my experience , that leads to temporary ip bans/ restrictions.
-            val m3u8Regex = Pattern.compile("#EXT-X-STREAM-INF:.*?RESOLUTION=(\\d+x\\d+)\\s*(https?://\\S+)", Pattern.MULTILINE)
-            val matcher = m3u8Regex.matcher(app.get(m3u8).text)
-
-            while (matcher.find()) {
-            val resolution = matcher.group(1) ?: continue
-            val url = matcher.group(2) ?: continue
-
-            callback.invoke(
-            ExtractorLink(
-            name,
-            vidDataId.text() + " " + resolution,
-            url,
-            "",
-            getQualityFromName(resolution),
-            INFER_TYPE
-            )
-            )
-
-            }
-            */
 
             callback.invoke(
                 ExtractorLink(
