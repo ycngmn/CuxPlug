@@ -4,14 +4,14 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
 }
 // use an integer for version numbers
-version = -1
+version = 2
 
 
 cloudstream {
     // All of these properties are optional, you can safely remove them
 
-    description = "Lorem ipsum"
-    authors = listOf("Cloudburst")
+    description = "Anime-Sama est un site de référencement et de catalogage, créé par des passionnés de l’animation et du divertissement APAC."
+    authors = listOf("ycngmn")
 
     /**
     * Status int as the following:
@@ -22,13 +22,13 @@ cloudstream {
     * */
     status = 1
 
-    tvTypes = listOf("Movie")
+    tvTypes = listOf("Anime")
 
     requiresResources = true
-    language = "en"
+    language = "fr"
 
     // random cc logo i found
-    iconUrl = "https://upload.wikimedia.org/wikipedia/commons/2/2f/Korduene_Logo.png"
+    iconUrl = "https://media.cdnandroid.com/item_images/1415321/imagen-anime-sama-voiranime-vostfree-0ori.jpg"
 }
 
 android {
