@@ -52,17 +52,27 @@ class AnizoneProvider : MainAPI() {
         "6" to "Latest Web"
     )
 
-    private val initReq = Jsoup.connect("$mainUrl/anime")
-        .method(Connection.Method.GET).execute()
 
-    private var cookies = initReq.cookies()
-    private val doc = initReq.parse()
-    private val token = doc.select("script[data-csrf]").attr("data-csrf")
-    private var wireSnapshot = getSnapshot(doc)
+    private var cookies = mutableMapOf<String, String>()
+    private var wireData = mutableMapOf(
+        "wireSnapshot" to "",
+        "token" to ""
+    )
+
+
+    init {
+        val initReq = Jsoup.connect("$mainUrl/anime")
+            .method(Connection.Method.GET).execute()
+        this.cookies = initReq.cookies()
+        val doc = initReq.parse()
+        wireData["token"] = doc.select("script[data-csrf]").attr("data-csrf")
+        wireData["wireSnapshot"] = getSnapshot(doc)
+        sortAnimeLatest()
+    }
 
 
     private fun sortAnimeLatest() {
-       liveWireBuilder(mapOf("sort" to "release-desc"), mutableListOf(), true)
+       liveWireBuilder(mapOf("sort" to "release-desc"), mutableListOf(), this.cookies, this.wireData, true)
     }
 
 
@@ -82,51 +92,20 @@ class AnizoneProvider : MainAPI() {
     }
 
 
-    private fun liveWireBuilder (updates : Map<String,String>,
-                                 calls: List<Map<String, Any>>,
+    private fun liveWireBuilder (updates : Map<String,String>, calls: List<Map<String, Any>>,
+                                 biscuit : MutableMap<String, String>,
+                                 wireCreds : MutableMap<String,String>, 
                                  remember : Boolean): JSONObject {
 
         val payload = mapOf(
-            "_token" to token, "components" to listOf(
-                mapOf("snapshot" to wireSnapshot, "updates" to updates,
+            "_token" to wireCreds["token"], "components" to listOf(
+                mapOf("snapshot" to wireCreds["wireSnapshot"], "updates" to updates,
                     "calls" to calls
                 )
             )
         )
-
-        val r = Jsoup.connect("$mainUrl/livewire/update")
-            .method(Connection.Method.POST)
-            .header("Content-Type", "application/json")
-            .cookies(cookies)
-            .ignoreContentType(true)
-            .requestBody(payload.toJson())
-            .execute()
-
-        if (remember) {
-            this.wireSnapshot = getSnapshot(JSONObject(r.body()))
-            this.cookies = r.cookies()
-        }
-
-        return JSONObject(r.body())
-    }
-
-    // I am a bad coder, now you know 🎵
-    // I will put these (token,cookie,Snapshot) inside a map , hopefully
-    private fun liveWireBuilder2(updates : Map<String,String>,
-                                 calls: List<Map<String, Any>>,
-                                 jeton : String,
-                                 biscuit: Map<String, String>,
-                                 wss : String) : Connection.Response {
-
-        val payload = mapOf("_token" to jeton,
-            "components" to listOf(mapOf(
-                    "snapshot" to wss, "updates" to updates,
-                    "calls" to calls
-                )
-            )
-        )
-
-        val r = Jsoup.connect("$mainUrl/livewire/update")
+        
+        val req = Jsoup.connect("$mainUrl/livewire/update")
             .method(Connection.Method.POST)
             .header("Content-Type", "application/json")
             .cookies(biscuit)
@@ -134,23 +113,34 @@ class AnizoneProvider : MainAPI() {
             .requestBody(payload.toJson())
             .execute()
 
-        return r
-    }
+        if (remember) {
+            wireCreds["wireSnapshot"] = getSnapshot(JSONObject(req.body()))
+            biscuit.putAll(req.cookies())
+        }
 
+        return JSONObject(req.body())
+    }
+    
+    
     override suspend fun getMainPage(page: Int, request: MainPageRequest
     ): HomePageResponse {
 
-        sortAnimeLatest() // Just 1 call is enough but where else to put it?
-        var home = getHtmlFromWire(liveWireBuilder(mapOf("type" to request.data),mutableListOf(), false))
-        if (page>1 && home.selectFirst(".h-12[x-intersect=\"\$wire.loadMore()\"]")!=null)
-            home = getHtmlFromWire(liveWireBuilder(mapOf(),mutableListOf(
-                mapOf("path" to "", "method" to "loadMore", "params" to listOf<String>())
-                ), true
-            ))
+        val doc = getHtmlFromWire(
+            liveWireBuilder(
+                mapOf("type" to request.data), mutableListOf(
+                    mapOf("path" to "", "method" to "loadMore", "params" to listOf<String>())
+                ), this.cookies, this.wireData, true
+            )
+        )
+
+        var home : List<Element> = doc.select("div[wire:key]")
+
+        if (page>1)
+            home = home.takeLast(12)
 
         return newHomePageResponse(
-            HomePageList(request.name, home.select("div[wire:key]").map { toResult(it)}, isHorizontalImages = false),
-            hasNext = true
+            HomePageList(request.name, home.map { toResult(it)}, isHorizontalImages = false),
+            hasNext = (doc.selectFirst(".h-12[x-intersect=\"\$wire.loadMore()\"]")!=null)
         )
     }
 
@@ -169,7 +159,7 @@ class AnizoneProvider : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val doc = getHtmlFromWire(liveWireBuilder(mapOf("search" to query),mutableListOf(), false))
+        val doc = getHtmlFromWire(liveWireBuilder(mapOf("search" to query),mutableListOf(), this.cookies, this.wireData,false))
         return doc.select("div[wire:key]").mapNotNull { toResult(it) }
     }
 
@@ -181,12 +171,13 @@ class AnizoneProvider : MainAPI() {
 
         var doc = Jsoup.parse(r.body())
 
-        val jeton = doc.select("script[data-csrf]").attr("data-csrf")
-        var cooky = r.cookies()
-        var wss = getSnapshot(doc=r.parse()) // ne ps confondre, GET / POST
-
-
-
+        
+        val cookie = r.cookies()
+        val wireData = mutableMapOf(
+            "wireSnapshot" to getSnapshot(doc=r.parse()),
+            "token" to doc.select("script[data-csrf]").attr("data-csrf")
+        )
+        
         val title = doc.selectFirst("h1")?.text()
             ?: throw NotImplementedError("Unable to find title")
 
@@ -201,21 +192,19 @@ class AnizoneProvider : MainAPI() {
         val genres = doc.select("a[wire:navigate][wire:key]").map { it.text() }
 
         while (doc.selectFirst(".h-12[x-intersect=\"\$wire.loadMore()\"]")!=null) {
-            val req = liveWireBuilder2(
+            doc = getHtmlFromWire(liveWireBuilder(
                 mutableMapOf(), mutableListOf(
                     mapOf("path" to "", "method" to "loadMore", "params" to listOf<String>())
-                ), jeton, cooky, wss
+                ), cookie, wireData, true
             )
-            doc = getHtmlFromWire(JSONObject(r.body()))
-            cooky = req.cookies()
-            wss = getSnapshot(JSONObject(r.body()))
+            )
         }
 
         // doc returns whole episodes including the previous ones.
-        // so we iter over it to scrap all at once.
-        val epiElts = doc.select("li[x-data]")
+        // so we iterate over it to scrap all at once.
+        val epiElms = doc.select("li[x-data]")
 
-        val episodes = epiElts.map{ elt ->
+        val episodes = epiElms.map{ elt ->
              Episode(
             data = elt.selectFirst("a")?.attr("href") ?: "",
             name = elt.selectFirst("h3")?.text()
