@@ -258,8 +258,8 @@ class AnizoneProvider : MainAPI() {
 
         callback.invoke(
             ExtractorLink(
-                name,
                 sourceName,
+                name,
                 m3U8,
                 "",
                 Qualities.Unknown.value,
