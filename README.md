@@ -7,7 +7,7 @@ International plugins for [CloudStream](https://cloudstream.on.fleek.co)
   - Settings
   - extensions
   - add repository
-- in repository URL, input
+- in repository URL, input either
     - *short-code*: `CuxPlug`
     - *raw json*: `https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json`
 ## Extensions
