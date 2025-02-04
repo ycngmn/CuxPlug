@@ -21,5 +21,5 @@ cloudstream {
 
 
     // random cc logo i found
-    iconUrl = "https://streamcloud.my/templates/streamcloud/images/newlogo.svg"
+    iconUrl = "https://i.ibb.co/6R3CkKg1/newlogo.jpg"
 }
