@@ -9,7 +9,7 @@ International plugins for [CloudStream](https://cloudstream.on.fleek.co)
   - add repository
 - in repository URL, input either
     - *short-code*: `CuxPlug`
-    - *raw json*: `https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json`
+    - *direct link*: `https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json`
 ## Extensions
 - [**Watch32**](https://watch32.sx): Watch32 is a Free Movies streaming site with over 10000 movies and TV-Series
 - [**AniZone**](https://anizone.to): Anizone.to is a website with no about us section but hey, there are anime
