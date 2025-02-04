@@ -1,5 +1,5 @@
 # CuxPlug
-International plugins for [CloudStream](https://cloudstream.on.fleek.co)developed for fun and interest
+International plugins for [CloudStream](https://cloudstream.on.fleek.co) developed for fun and interest
 ## installing the repository
 ### [Install automatically](https://self-similarity.github.io/http-protocol-redirector?r=cloudstreamrepo://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json)
 ### Install manually
