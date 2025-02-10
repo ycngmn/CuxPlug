@@ -6,7 +6,8 @@ cloudstream {
     // All of these properties are optional, you can safely remove them
 
     description = "Stream Filme Kostenlos Online anschauen Deutsch."
-    authors = listOf("ycngmn")
+    language    = "de"
+    authors     = listOf("ycngmn")
 
     /**
      * Status int as the following:
