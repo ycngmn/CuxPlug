@@ -29,7 +29,7 @@ class Watch32Provider : MainAPI() {
         TvType.TvSeries,
     )
 
-    override var lang = ""
+    override var lang = "en"
 
     override val hasMainPage = true
     override val hasQuickSearch = true

@@ -40,7 +40,7 @@ class AnizoneProvider : MainAPI() {
         TvType.AnimeMovie,
     )
 
-    override var lang = ""
+    override var lang = "en"
 
     override val hasMainPage = true
     override val hasQuickSearch = true
@@ -243,7 +243,7 @@ class AnizoneProvider : MainAPI() {
 
 
         val web = app.get(data).document
-        val sourceName = web.select("span.truncate")[1]?.text() ?: ""
+        val sourceName = web.selectFirst("span.truncate")?.text() ?: ""
         val mediaPlayer = web.selectFirst("media-player")
         val m3U8 = mediaPlayer?.attr("src") ?: ""
 
@@ -258,8 +258,8 @@ class AnizoneProvider : MainAPI() {
 
         callback.invoke(
             ExtractorLink(
-                name,
                 sourceName,
+                name,
                 m3U8,
                 "",
                 Qualities.Unknown.value,

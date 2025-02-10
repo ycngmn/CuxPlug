@@ -5,6 +5,7 @@ cloudstream {
     // All of these properties are optional, you can safely remove them
 
     description = "Anizone.to is a website with no about us section but hey, there are anime."
+    language = "en"
     authors = listOf("ycngmn")
 
     /**
@@ -20,5 +21,5 @@ cloudstream {
 
 
     // random cc logo i found : me too, how cool
-    iconUrl = "https://assets.turbologo.com/blog/fr/2021/09/21101525/anime-logo.png"
+    iconUrl = "https://avatarfiles.alphacoders.com/292/thumb-1920-292030.png"
 }

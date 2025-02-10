@@ -1,7 +1,5 @@
 package com.ycngmn
 
-
-import android.util.Log
 import com.lagradost.cloudstream3.DubStatus
 import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
@@ -20,7 +18,6 @@ import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newAnimeLoadResponse
 import com.lagradost.cloudstream3.newAnimeSearchResponse
 import com.lagradost.cloudstream3.newHomePageResponse
-import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.nodes.Element
@@ -55,32 +52,12 @@ class AnimesamaProvider : MainAPI() {
         val query = when (request.data) {
             "1" -> "#containerAjoutsAnimes a"
             "2" -> "#containerSorties a"
-            "3" -> "#containerClassiques"
-            "4" -> "#containerPepites"
+            "3" -> "#containerClassiques a"
+            "4" -> "#containerPepites a"
             else -> ""
         }
-        val home = when (request.data) {
-            "1", "2" -> doc.select(query).mapNotNull { toResult(it) }
-            "3", "4" -> {
-                val regex =
-                    Regex("""carte(Classique|Pepite)\("([^"]+)",\s*"([^"]+)"(?:,\s*"([^"]+)")*\)""")
-                val matches = regex.findAll(doc.select(query).toString())
-                matches.map { match ->
-                    val title = match.groupValues[2]
-                    val path = match.groupValues[3]
-                    newMovieSearchResponse(
-                        title,
-                        "https://anime-sama.fr/catalogue/$path",
-                        TvType.Anime
-                    ) {
-                        this.posterUrl =
-                            "https://cdn.statically.io/gh/Anime-Sama/IMG/img/contenu/$path.jpg"
-                    }
-                }.toList()
-            }
+        val home = doc.select(query).mapNotNull { toResult(it) }
 
-            else -> listOf()
-        }
         return newHomePageResponse(
             HomePageList(request.name, home, isHorizontalImages = true),
             false
@@ -249,7 +226,6 @@ class AnimesamaProvider : MainAPI() {
         return true
     }
 
-
     /**
      * Extracts the stream host and episode URLs from AnimeSama stream pages.
      *
@@ -259,12 +235,12 @@ class AnimesamaProvider : MainAPI() {
      * https://anime-sama.fr/catalogue/anime-name/saison0/vostfr/
      * ```
      * @return A map containing pairs of sources and their corresponding lists of stream links,
-     *         or an empty string if no match is found.
+     *         or an empty list if no match is found.
      */
 
     private suspend fun retreiveSrcs(streamPage: String): Map<String, List<String>> {
 
-        val request = app.get(streamPage, timeout = 30)
+        val request = app.get(streamPage)
 
         if (request.isSuccessful) {
 
@@ -272,10 +248,7 @@ class AnimesamaProvider : MainAPI() {
             val epiKey = doc.selectFirst("#sousBlocMiddle script").toString()
             val re = Regex("""<script[^>]*src=['"]([^'"]*episodes\.js\?filever=\d+)['"][^>]*>""")
             val episodeKey = re.find(epiKey)?.groupValues?.get(1)
-            val rawLinks = app.get(
-                "$streamPage/$episodeKey",
-                timeout = 60
-            ).document.toString() //  change to  .text?
+            val rawLinks = app.get("$streamPage/$episodeKey",).text
             val reURL = """['"]https?://[^\s'"]+['"]""".toRegex()
             val urls = reURL.findAll(rawLinks)
                 .map { it.value.trim('\'', '"') }

@@ -49,6 +49,7 @@ class FrenchStreamProvider : MainAPI() {
         "series-disney-plus" to "Nouveautés Disney+",
         "serie-amazon-prime-videos" to "Nouveautés Prime Video",
         "sries-du-moment" to "Box Office Série",
+        "" to "Box Office Film"
 
     )
 
@@ -56,9 +57,11 @@ class FrenchStreamProvider : MainAPI() {
     ): HomePageResponse {
 
 
-
-        val home = app.get("$mainUrl/${request.data}/page/$page").document
-            .select(".short").map { toResult(it) }
+        val home = if (request.data == "" && page == 1)
+            app.get("$mainUrl/${request.data}/page/$page").document
+                .select("#dle-content .short").map { toResult(it) }
+            else app.get("$mainUrl/${request.data}/page/$page").document
+                .select(".short").map { toResult(it) }
 
         return newHomePageResponse(
             HomePageList(request.name, home, isHorizontalImages = false),
@@ -90,7 +93,7 @@ class FrenchStreamProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
 
-        val doc = app.get(url, cacheTime = 60).document
+        val doc = app.post(url, cacheTime = 60).document
         val title = doc.selectFirst("#s-title")?.ownText() ?: ""
         val image = doc.selectFirst(".thumbnail")?.attr("src")
         val synopsis = doc.selectFirst("#s-desc")?.ownText()
@@ -107,13 +110,14 @@ class FrenchStreamProvider : MainAPI() {
 
             // Version 1 for VF, 2 for VOSTFR. Seasons are separate card.
             versionContainers.forEachIndexed { i, versionContainer ->
-                versionContainer.select("a").forEach {
+                versionContainer.select("a").forEachIndexed { j, it ->
                     val dataRel = it.attr("data-rel")
                     if (dataRel.isNotEmpty())
                         episodes += Episode(
                             data = doc.selectFirst("#$dataRel")?.toString() ?: "",
                             name = it.attr("title"),
                             posterUrl = image,
+                            episode = j+1,
                             season = i + 1,
                         )
                 }
@@ -176,11 +180,14 @@ class FrenchStreamProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
 
-        if (data.contains("class=\"fsctab\"")) {
+        if (data.contains("class=\"fsctab\"")) { // series
 
             Jsoup.parse(data).select(".fsctab").forEach {
                 // create extractor kt
-                val vid = app.get(it.attr("href"), allowRedirects = true).url
+                val vidSrc = it.attr("href")
+
+                val vid = if (vidSrc.contains("flixeo.xyz")) app.head(vidSrc, allowRedirects = false).headers["Location"] ?: ""
+                            else vidSrc
                 loadExtractor(vid, subtitleCallback, callback)
             }
         }
