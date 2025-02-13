@@ -5,8 +5,8 @@ version = 1
 cloudstream {
     // All of these properties are optional, you can safely remove them
 
-    description = "Stream Filme Kostenlos Online anschauen Deutsch."
-    language    = "de"
+    description = "Indian multi-lingual movies & TV shows"
+    language    = "hi"
     authors = listOf("ycngmn")
 
     /**
@@ -21,6 +21,5 @@ cloudstream {
     tvTypes = listOf("Movie","TvSeries")
 
 
-    // random cc logo i found
-    iconUrl = "https://streamcloud.my/templates/streamcloud/images/newlogo.svg"
+    iconUrl = "https://freedrivemovie.com/wp-content/uploads/2020/10/cropped-PicsArt_10-11-07.20.53.jpg"
 }

@@ -37,7 +37,7 @@ class StreamCloudProvider : MainAPI() {
 
     override val mainPage = mainPageOf(
         "kinofilme" to "Kinofilme",
-        "serien" to "Popular TV Shows",
+        "serien" to "Serien",
         "xfsearch/deutschland" to "Deutschland"
     )
 

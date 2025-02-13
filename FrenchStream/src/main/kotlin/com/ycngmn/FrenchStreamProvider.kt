@@ -1,7 +1,7 @@
 package com.ycngmn
 
 
-import android.util.Log
+import com.lagradost.cloudstream3.DubStatus
 import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.HomePageResponse
@@ -13,17 +13,18 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.addSeasonNames
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.getQualityFromString
 import com.lagradost.cloudstream3.mainPageOf
+import com.lagradost.cloudstream3.newAnimeSearchResponse
 import com.lagradost.cloudstream3.newHomePageResponse
-import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import java.util.EnumSet
 import java.util.regex.Pattern
-import kotlin.math.log
 
 class FrenchStreamProvider : MainAPI() {
 
@@ -76,8 +77,22 @@ class FrenchStreamProvider : MainAPI() {
         var thumb = post.selectFirst("img")?.attr("src") ?: ""
         if (thumb.startsWith("data:"))
             thumb = post.selectFirst("img")?.attr("data-src") ?: ""
-        return newMovieSearchResponse(title, url, TvType.Movie) {
+        val vfStatus = post.selectFirst(".film-verz")?.text() ?: ""
+        val epiNum = post.selectFirst(".mli-eps i")?.text()?.toIntOrNull() ?: 0
+
+        return newAnimeSearchResponse(title, url, TvType.Movie) {
             this.posterUrl = thumb
+            if (vfStatus.contains("VF") || vfStatus.contains("french",ignoreCase = true)) {
+                this.dubStatus = EnumSet.of(DubStatus.Dubbed)
+                if (epiNum > 0) this.episodes = mutableMapOf(DubStatus.Dubbed to epiNum)
+            }
+            else if (vfStatus.contains("VOSTFR")) {
+                this.dubStatus = EnumSet.of(DubStatus.Subbed)
+                if (epiNum > 0) this.episodes = mutableMapOf(DubStatus.Subbed to epiNum)
+            }
+            this.quality = getQualityFromString(post.selectFirst(".film-ripz")?.text())
+
+
 
 
         }
@@ -97,7 +112,7 @@ class FrenchStreamProvider : MainAPI() {
         val title = doc.selectFirst("#s-title")?.ownText() ?: ""
         val image = doc.selectFirst(".thumbnail")?.attr("src")
         val synopsis = doc.selectFirst("#s-desc")?.ownText()
-        val type = if (doc.selectFirst("#downloadBtn") == null) TvType.TvSeries else TvType.Movie
+        val type = if (doc.selectFirst(".elink") == null) TvType.Movie else TvType.TvSeries
 
         val genres = if (type == TvType.Movie) doc.selectFirst("#s-list li:nth-child(2)")?.select("a")?.map { it.text() }
                     else doc.selectFirst("#s-list li:nth-child(2)")?.text()?.substringAfter(":")?.split(",")?.map { it.trim() }
@@ -115,7 +130,6 @@ class FrenchStreamProvider : MainAPI() {
                     if (dataRel.isNotEmpty())
                         episodes += Episode(
                             data = doc.selectFirst("#$dataRel")?.toString() ?: "",
-                            name = it.attr("title"),
                             posterUrl = image,
                             episode = j+1,
                             season = i + 1,
@@ -136,9 +150,9 @@ class FrenchStreamProvider : MainAPI() {
 
         else {
 
-            val movieData = doc.selectFirst("#player-container + script ")?.data()
+
             val regex = Pattern.compile("""playerUrls\s*=\s*(\{.*?\});""", Pattern.DOTALL)
-            val matcher = regex.matcher(movieData.toString())
+            val matcher = regex.matcher(doc.toString())
             val movieJson = if (matcher.find()) JSONObject(matcher.group(1) ?: "") else JSONObject()
             val sortedMJ = sortUrls(movieJson)
 
