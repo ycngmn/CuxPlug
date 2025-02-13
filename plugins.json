@@ -1,0 +1,120 @@
+[
+    {
+        "iconUrl": "https://media.cdnandroid.com/item_images/1415321/imagen-anime-sama-voiranime-vostfree-0ori.jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 15892,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 2,
+        "internalName": "AnimeSama",
+        "description": "Anime-Sama est un site de r\u00e9f\u00e9rencement et de catalogage, cr\u00e9\u00e9 par des passionn\u00e9s de l\u2019animation et du divertissement APAC.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/AnimeSama.cs3",
+        "name": "AnimeSama"
+    },
+    {
+        "iconUrl": "https://avatarfiles.alphacoders.com/292/thumb-1920-292030.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 11682,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 2,
+        "internalName": "Anizone",
+        "description": "Anizone.to is a website with no about us section but hey, there are anime.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Anizone.cs3",
+        "name": "Anizone"
+    },
+    {
+        "iconUrl": "https://freedrivemovie.com/wp-content/uploads/2020/10/cropped-PicsArt_10-11-07.20.53.jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 13496,
+        "status": 0,
+        "language": "hi",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "FreeDriveMovie",
+        "description": "Indian multi-lingual movies & TV shows",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/FreeDriveMovie.cs3",
+        "name": "FreeDriveMovie"
+    },
+    {
+        "iconUrl": "https://pbs.twimg.com/profile_images/1849214735427719168/T7sqRoBF_400x400.jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 20237,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 7,
+        "internalName": "FrenchStream",
+        "description": "French Stream est un site qui va r\u00e9cup\u00e8rer les films et s\u00e9ries sur des plateformes comme Disney+, Netflix, Amazon Prime Video, HBO, Apple TV , Wakanim, Viki... et vous les proposer Gratuitement!",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/FrenchStream.cs3",
+        "name": "FrenchStream"
+    },
+    {
+        "iconUrl": "https://streamcloud.my/templates/streamcloud/images/newlogo.svg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 12187,
+        "status": 1,
+        "language": "de",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "StreamCloud",
+        "description": "Stream Filme Kostenlos Online anschauen Deutsch.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/StreamCloud.cs3",
+        "name": "StreamCloud"
+    },
+    {
+        "iconUrl": "https://editorialge.com/wp-content/uploads/2023/07/Watch32..jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 14892,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "Watch32",
+        "description": "Watch32 is a Free Movies streaming site with over 10000 movies and TV-Series.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Watch32.cs3",
+        "name": "Watch32"
+    }
+]
