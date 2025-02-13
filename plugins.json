@@ -1,0 +1,61 @@
+[
+    {
+        "iconUrl": "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/anime-sama.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 19363,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 8,
+        "internalName": "AnimeSama",
+        "description": "Anime-Sama est un site de r\u00e9f\u00e9rencement et de catalogage, cr\u00e9\u00e9 par des passionn\u00e9s de l\u2019animation et du divertissement APAC.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/AnimeSama.cs3",
+        "name": "AnimeSama"
+    },
+    {
+        "iconUrl": "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/anizone.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 12302,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 2,
+        "internalName": "Anizone",
+        "description": "Anizone.to streams latest anime content in multiple language.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Anizone.cs3",
+        "name": "Anizone"
+    },
+    {
+        "iconUrl": "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/french-stream.jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 23731,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime"
+        ],
+        "version": 8,
+        "internalName": "FrenchStream",
+        "description": "French Stream r\u00e9cup\u00e8re les films et s\u00e9ries et vous les propose Gratuitement!",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/FrenchStream.cs3",
+        "name": "FrenchStream"
+    }
+]
