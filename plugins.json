@@ -1,0 +1,141 @@
+[
+    {
+        "iconUrl": "https://ww3.animeluxe.org/wp-content/uploads/2023/10/logo.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 10520,
+        "status": 1,
+        "language": "ar",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 1,
+        "internalName": "AnimeLuxe",
+        "description": "\u0627\u0646\u0645\u064a \u0644\u0648\u0643\u0633 - AnimeLuxe \u0645\u0648\u0642\u0639 \u0645\u0634\u0627\u0647\u062f\u0629 \u0627\u0644\u0627\u0646\u0645\u064a \u0645\u062a\u0631\u062c\u0645 \u0627\u0648\u0646 \u0644\u0627\u064a\u0646",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/AnimeLuxe.cs3",
+        "name": "AnimeLuxe"
+    },
+    {
+        "iconUrl": "https://cdn.statically.io/gh/Anime-Sama/IMG/img/autres/logo.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 16797,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 2,
+        "internalName": "AnimeSama",
+        "description": "Anime-Sama est un site de r\u00e9f\u00e9rencement et de catalogage, cr\u00e9\u00e9 par des passionn\u00e9s de l\u2019animation et du divertissement APAC.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/AnimeSama.cs3",
+        "name": "AnimeSama"
+    },
+    {
+        "iconUrl": "https://avatarfiles.alphacoders.com/292/thumb-1920-292030.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 12026,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Anime"
+        ],
+        "version": 2,
+        "internalName": "Anizone",
+        "description": "Anizone.to is a website with no about us section but hey, there are anime.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Anizone.cs3",
+        "name": "Anizone"
+    },
+    {
+        "iconUrl": "https://flixmet.com/wp-content/uploads/2024/08/Flixmet.com-head-2.png",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 12651,
+        "status": 1,
+        "language": "bn",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "Flixmet",
+        "description": "Watch any movie worldwide including Hollywood, Bollywood and Bengali. PREFER DOWNLOAD THAN STREAMING!",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Flixmet.cs3",
+        "name": "Flixmet"
+    },
+    {
+        "iconUrl": "https://iili.io/K8AbMcx.jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 21748,
+        "status": 1,
+        "language": "fr",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime"
+        ],
+        "version": 8,
+        "internalName": "FrenchStream",
+        "description": "French Stream est un site qui va r\u00e9cup\u00e8rer les films et s\u00e9ries sur des plateformes comme Disney+, Netflix, Amazon Prime Video, HBO, Apple TV , Wakanim, Viki... et vous les proposer Gratuitement!",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/FrenchStream.cs3",
+        "name": "FrenchStream"
+    },
+    {
+        "iconUrl": "https://streamcloud.my/templates/streamcloud/images/newlogo.svg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 12855,
+        "status": 1,
+        "language": "de",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "StreamCloud",
+        "description": "Stream Filme Kostenlos Online anschauen Deutsch.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/StreamCloud.cs3",
+        "name": "StreamCloud"
+    },
+    {
+        "iconUrl": "https://editorialge.com/wp-content/uploads/2023/07/Watch32..jpg",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/ycngmn/CuxPlug",
+        "fileSize": 15650,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ycngmn"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "Watch32",
+        "description": "Watch32 is a Free Movies streaming site with over 10000 movies and TV-Series.",
+        "url": "https://raw.githubusercontent.com/ycngmn/CuxPlug/builds/Watch32.cs3",
+        "name": "Watch32"
+    }
+]
