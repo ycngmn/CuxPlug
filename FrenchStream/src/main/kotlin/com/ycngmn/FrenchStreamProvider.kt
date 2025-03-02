@@ -23,23 +23,25 @@ import com.lagradost.cloudstream3.utils.loadExtractor
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.util.EnumSet
 import java.util.regex.Pattern
 
 class FrenchStreamProvider : MainAPI() {
 
     override var mainUrl = "https://french-stream.pink" // dynamically get mainUrl from https://fstream.one/ if unstable.
+    private val animeUrl = "https://w14.french-manga.net"
     override var name = "French-Stream"
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
+        TvType.Anime,
     )
 
     override var lang = "fr" // French
 
     override val hasMainPage = true
     override val hasQuickSearch = false
-
 
 
     override val mainPage = mainPageOf(
@@ -58,24 +60,26 @@ class FrenchStreamProvider : MainAPI() {
     ): HomePageResponse {
 
 
-        val home = if (request.data == "" && page == 1)
-            app.get("$mainUrl/${request.data}/page/$page").document
-                .select("#dle-content .short").map { toResult(it) }
-            else app.get("$mainUrl/${request.data}/page/$page").document
-                .select(".short").map { toResult(it) }
+        val home = when {
+            (request.data == "" && page == 1) -> app.get("$mainUrl/${request.data}/page/$page")
+            (request.data == "manga-streaming-1") -> app.get("$animeUrl/${request.data}/page/$page")
+            else -> app.get("$mainUrl/${request.data}/page/$page")
+        }
 
         return newHomePageResponse(
-            HomePageList(request.name, home, isHorizontalImages = false),
-            hasNext = true
+            HomePageList(request.name,
+                home.document.select("#dle-content .short").map { toResult(it) },
+                isHorizontalImages = false), hasNext = true
         )
     }
 
 
     private fun toResult(post: Element): SearchResponse {
         val title = post.selectFirst(".short-title")?.text() ?: ""
-        val url = mainUrl + post.selectFirst(".short-poster.img-box.with-mask")?.attr("href")
+        var url = post.selectFirst(".short-poster.img-box.with-mask")?.attr("href") ?: ""
+        if (url.startsWith("/")) url = mainUrl + url
         var thumb = post.selectFirst("img")?.attr("src") ?: ""
-        if (thumb.startsWith("data:"))
+        if (thumb.isEmpty() || thumb.startsWith("data:"))
             thumb = post.selectFirst("img")?.attr("data-src") ?: ""
         val vfStatus = post.selectFirst(".film-verz")?.text() ?: ""
         val epiNum = post.selectFirst(".mli-eps i")?.text()?.toIntOrNull() ?: 0
@@ -92,23 +96,26 @@ class FrenchStreamProvider : MainAPI() {
             }
             this.quality = getQualityFromString(post.selectFirst(".film-ripz")?.text())
 
-
-
-
         }
+    }
+
+    private suspend fun fetchSearchResults(url: String, query: String): Elements {
+        return app.get("$url/index.php?story=$query&do=search&subaction=search")
+            .document.select(".short")
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
 
-        val doc = app.get("$mainUrl/index.php?story=$query&do=search&subaction=search").document
-        return doc.select(".short.lazy-block")
-            .map { toResult(it) }
+        val searchItems = fetchSearchResults(mainUrl, query) + fetchSearchResults(animeUrl, query)
+
+        return searchItems.map { toResult(it) }
     }
 
 
     override suspend fun load(url: String): LoadResponse {
 
-        val doc = app.post(url, cacheTime = 60).document
+        val doc =  app.post(url).document
+
         val title = doc.selectFirst("#s-title")?.ownText() ?: ""
         val image = doc.selectFirst(".thumbnail")?.attr("src")
         val synopsis = doc.selectFirst("#s-desc")?.ownText()
@@ -150,10 +157,15 @@ class FrenchStreamProvider : MainAPI() {
 
         else {
 
+            val n = app.post(url,
+                headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
+                data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
+            ).document
 
             val regex = Pattern.compile("""playerUrls\s*=\s*(\{.*?\});""", Pattern.DOTALL)
-            val matcher = regex.matcher(doc.toString())
+            val matcher = regex.matcher(n.toString())
             val movieJson = if (matcher.find()) JSONObject(matcher.group(1) ?: "") else JSONObject()
+
             val sortedMJ = sortUrls(movieJson)
 
             // maybe i made it a bit complex. Would have been nicer if could be transformed to "Track/ Piste". "A Big Maybe"
