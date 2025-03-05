@@ -1,7 +1,7 @@
 [DMCA notice](https://github.com/ycngmn/CuxPlug/blob/main/DMCA-notice.md)
 # CuxPlug
 International plugins for [CloudStream](https://cloudstream.on.fleek.co) developed from fun and interest
-## Installing the repository
+## Installation
 ### [Install automatically](https://self-similarity.github.io/http-protocol-redirector?r=cloudstreamrepo://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json)
 ### Install manually
 - Navigate
