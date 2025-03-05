@@ -1,4 +1,5 @@
 [DMCA notice](https://github.com/ycngmn/CuxPlug/blob/main/DMCA-notice.md)
+
 ---
 # CuxPlug
 International plugins for [CloudStream](https://cloudstream.on.fleek.co) developed from fun and interest
