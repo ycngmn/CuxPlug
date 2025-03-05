@@ -1,6 +1,8 @@
 [DMCA notice](https://github.com/ycngmn/CuxPlug/blob/main/DMCA-notice.md)
+---
 # CuxPlug
 International plugins for [CloudStream](https://cloudstream.on.fleek.co) developed from fun and interest
+---
 ## Installation
 ### [Automatic](https://self-similarity.github.io/http-protocol-redirector?r=cloudstreamrepo://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json)
 ### Manual
@@ -11,6 +13,7 @@ International plugins for [CloudStream](https://cloudstream.on.fleek.co) develop
 - in repository URL, input either
     - short-code: `CuxPlug`
     - direct-link: `https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json`
+---
 ## Extensions
 - [**Watch32**](https://watch32.sx): Watch32 is a Free Movies streaming site with over 10000 movies and TV-Series.
 - [**AniZone**](https://anizone.to): Anizone.to is a website with no about us section but hey, there are anime.
