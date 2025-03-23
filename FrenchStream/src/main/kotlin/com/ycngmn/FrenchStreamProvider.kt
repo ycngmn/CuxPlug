@@ -29,7 +29,8 @@ import java.util.regex.Pattern
 
 class FrenchStreamProvider : MainAPI() {
 
-    override var mainUrl = "https://french-stream.pink" // dynamically get mainUrl from https://fstream.one/ if unstable.
+    // dynamically get mainUrl from https://fstream.one/ if unstable.
+    override var mainUrl = "https://french-stream.pink"
     private val animeUrl = "https://w14.french-manga.net"
     override var name = "French-Stream"
     override val supportedTypes = setOf(
@@ -61,14 +62,14 @@ class FrenchStreamProvider : MainAPI() {
 
 
         val home = when {
-            (request.data == "" && page == 1) -> app.get("$mainUrl/${request.data}/page/$page")
+            (request.data == "" && page == 1) -> app.get("$mainUrl/${request.data}/page/2")
             (request.data == "manga-streaming-1") -> app.get("$animeUrl/${request.data}/page/$page")
             else -> app.get("$mainUrl/${request.data}/page/$page")
         }
 
         return newHomePageResponse(
             HomePageList(request.name,
-                home.document.select("#dle-content .short").map { toResult(it) },
+                home.document.select(".short").map { toResult(it) },
                 isHorizontalImages = false), hasNext = true
         )
     }
@@ -81,7 +82,7 @@ class FrenchStreamProvider : MainAPI() {
         var thumb = post.selectFirst("img")?.attr("src") ?: ""
         if (thumb.isEmpty() || thumb.startsWith("data:"))
             thumb = post.selectFirst("img")?.attr("data-src") ?: ""
-        val vfStatus = post.selectFirst(".film-verz")?.text() ?: ""
+        val vfStatus = post.selectFirst(".film-version")?.text() ?: ""
         val epiNum = post.selectFirst(".mli-eps i")?.text()?.toIntOrNull() ?: 0
 
         return newAnimeSearchResponse(title, url, TvType.Movie) {
@@ -94,7 +95,7 @@ class FrenchStreamProvider : MainAPI() {
                 this.dubStatus = EnumSet.of(DubStatus.Subbed)
                 if (epiNum > 0) this.episodes = mutableMapOf(DubStatus.Subbed to epiNum)
             }
-            this.quality = getQualityFromString(post.selectFirst(".film-ripz")?.text())
+            this.quality = getQualityFromString(post.selectFirst(".film-quality")?.text())
 
         }
     }
@@ -111,45 +112,98 @@ class FrenchStreamProvider : MainAPI() {
         return searchItems.map { toResult(it) }
     }
 
-
     override suspend fun load(url: String): LoadResponse {
 
-        val doc =  app.post(url).document
+        // working with the new interface.
+        val doc =  app.post(url,
+            headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
+            data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
+        ).document
 
-        val title = doc.selectFirst("#s-title")?.ownText() ?: ""
-        val image = doc.selectFirst(".thumbnail")?.attr("src")
-        val synopsis = doc.selectFirst("#s-desc")?.ownText()
-        val type = if (doc.selectFirst(".elink") == null) TvType.Movie else TvType.TvSeries
+        val contentType = if (url.contains("/films/")) TvType.Movie else TvType.TvSeries
 
-        val genres = if (type == TvType.Movie) doc.selectFirst("#s-list li:nth-child(2)")?.select("a")?.map { it.text() }
-                    else doc.selectFirst("#s-list li:nth-child(2)")?.text()?.substringAfter(":")?.split(",")?.map { it.trim() }
+        val synopsis = if (contentType == TvType.TvSeries) doc.selectFirst(".fdesc")?.text()
+            else doc.selectFirst("#s-desc")?.ownText()
+        val infoContainer = doc.selectFirst("div.facts")
+        val releaseYear = infoContainer?.selectFirst("span.release")
+            ?.text()?.substringBefore("-")?.trim()
+        val genres = infoContainer?.selectFirst("span.genres")
+            ?.text()?.trim()?.split(",")?.map{ it.trim() }
+        val duration = infoContainer?.selectFirst("span.runtime")?.text()
+            ?.trim()?.substringBefore(" ")
+
+        val title = doc.selectFirst("#s-title")?.ownText()
+            ?.removeSurrounding("\"")?.trim() ?: ""
 
 
-        val episodes = mutableListOf<Episode>()
+        val posterRegex = Regex("""url\((https?://\S+)\)""")
+        val image = posterRegex.find(doc.toString())?.groupValues?.get(1)
 
-        if (type == TvType.TvSeries) {
-            val versionContainers = doc.select(".elink")
 
-            // Version 1 for VF, 2 for VOSTFR. Seasons are separate card.
-            versionContainers.forEachIndexed { i, versionContainer ->
-                versionContainer.select("a").forEachIndexed { j, it ->
-                    val dataRel = it.attr("data-rel")
-                    if (dataRel.isNotEmpty())
-                        episodes += Episode(
-                            data = doc.selectFirst("#$dataRel")?.toString() ?: "",
-                            posterUrl = image,
-                            episode = j+1,
-                            season = i + 1,
+        val vfEpisodes = mutableListOf<Episode>()
+        val voEpisodes = mutableListOf<Episode>()
+
+        if (contentType == TvType.TvSeries) {
+
+            val episodeLists = doc.select("script[type=\"text/template\"]")
+                .map { Jsoup.parse(it.data()) }
+
+            episodeLists.forEachIndexed { sourceIndex, episodeList ->
+
+                val episodeContainers = episodeList.select(".episode-container")
+
+                episodeContainers.forEachIndexed { epiIndex, episodeContainer ->
+
+                    val epiTitle = episodeContainer.selectFirst(".episode-title")
+                        ?.text()?.substringAfter(":") ?: ""
+                    val epiImage = episodeContainer.selectFirst(".episode-image")
+                        ?.attr("src") ?: image
+                    val epiSynopsis =
+                        episodeContainer.selectFirst(".episode-synopsis")?.text() ?: ""
+                    val epiVF = episodeContainer.selectFirst("[data-episode*=\"-vf\"]")
+                        ?.attr("data-url") ?: ""
+                    val epiVO = episodeContainer
+                        .selectFirst("[data-episode*=\"-vo\"]")
+                        ?.attr("data-url") ?: ""
+
+                    if (sourceIndex == 0) {
+
+                        vfEpisodes += Episode(
+                            name = epiTitle,
+                            data = epiVF,
+                            posterUrl = epiImage,
+                            episode = epiIndex + 1,
+                            season = 1,
+                            description = epiSynopsis
                         )
+
+                        voEpisodes += Episode(
+                            name = epiTitle,
+                            data = epiVO,
+                            posterUrl = epiImage,
+                            episode = epiIndex + 1,
+                            season = 2,
+                            description = epiSynopsis
+                        )
+                    }
+                    else {
+                        if (epiVF.isNotEmpty()) vfEpisodes[epiIndex].data += " $epiVF"
+                        if (epiVO.isNotEmpty()) voEpisodes[epiIndex].data += " $epiVO"
+                    }
                 }
 
             }
 
-            return newTvSeriesLoadResponse(title,url,TvType.TvSeries, episodes) {
+            val episodes = (vfEpisodes + voEpisodes).filter { it.data.isNotEmpty() }
+
+            return newTvSeriesLoadResponse(title, url, TvType.TvSeries,episodes) {
                 this.posterUrl = image
                 this.plot = synopsis
                 this.tags = genres
+                this.duration = duration?.toIntOrNull()
+                this.year = releaseYear?.toIntOrNull()
                 addSeasonNames(listOf("VF","VOSTFR"))
+
 
 
             }
@@ -157,13 +211,8 @@ class FrenchStreamProvider : MainAPI() {
 
         else {
 
-            val n = app.post(url,
-                headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
-                data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
-            ).document
-
             val regex = Pattern.compile("""playerUrls\s*=\s*(\{.*?\});""", Pattern.DOTALL)
-            val matcher = regex.matcher(n.toString())
+            val matcher = regex.matcher(doc.toString())
             val movieJson = if (matcher.find()) JSONObject(matcher.group(1) ?: "") else JSONObject()
 
             val sortedMJ = sortUrls(movieJson)
@@ -185,12 +234,12 @@ class FrenchStreamProvider : MainAPI() {
 
             }
 
-            val releasedYear = doc.selectFirst(".flist-col:nth-child(2) li:nth-child(3)")?.ownText()?.trim()
             return newTvSeriesLoadResponse(title,url,TvType.TvSeries, movieEpisodes) {
                 this.posterUrl = image
                 this.plot = synopsis
                 this.tags = genres
-                this.year = releasedYear?.toIntOrNull()
+                this.duration = duration?.toIntOrNull()
+                this.year = releaseYear?.toIntOrNull()
                 addSeasonNames(versionNames)
 
             }
@@ -206,14 +255,17 @@ class FrenchStreamProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
 
-        if (data.contains("class=\"fsctab\"")) { // series
 
-            Jsoup.parse(data).select(".fsctab").forEach {
-                // create extractor kt
-                val vidSrc = it.attr("href")
+        if (!data.startsWith("[")) { // series
 
-                val vid = if (vidSrc.contains("flixeo.xyz")) app.head(vidSrc, allowRedirects = false).headers["Location"] ?: ""
-                            else vidSrc
+            val sources = data.split(" ")
+
+            sources.forEach {
+
+                val vid = if (it.contains("flixeo.xyz"))
+                    app.head(it, allowRedirects = false).headers["Location"] ?: ""
+                    else it
+
                 loadExtractor(vid, subtitleCallback, callback)
             }
         }

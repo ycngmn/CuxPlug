@@ -1,5 +1,5 @@
 // use an integer for version numbers
-version = 3
+version = 2
 
 
 cloudstream {
@@ -15,13 +15,14 @@ cloudstream {
     * 2: Slow
     * 3: Beta only
     * */
-    status = 1
+    status = 0
 
     tvTypes = listOf("Anime")
 
     requiresResources = true
     language = "fr"
 
+    // random cc logo i found
     iconUrl = "https://media.cdnandroid.com/item_images/1415321/imagen-anime-sama-voiranime-vostfree-0ori.jpg"
 }
 
