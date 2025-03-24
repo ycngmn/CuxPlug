@@ -20,6 +20,7 @@ import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
+import com.lagradost.nicehttp.NiceResponse
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -48,23 +49,32 @@ class FrenchStreamProvider : MainAPI() {
     override val mainPage = mainPageOf(
         "films" to "Derniers Films",
         "s-tv" to "Dernieres Séries",
+        "manga-streaming-1" to "Derniers Animes",
+        "coups-de-cur" to "Coups de Cœur - Anime",
         "netflix-series-" to "Nouveautés NETFLIX",
         "series-apple-tv" to "Nouveautés Apple TV+",
         "series-disney-plus" to "Nouveautés Disney+",
         "serie-amazon-prime-videos" to "Nouveautés Prime Video",
         "sries-du-moment" to "Box Office Série",
         "" to "Box Office Film"
-
     )
+
+    //https://w14.french-manga.net/index.php?cstart=2&do=cat&category=manga-streaming-1
+
+    private suspend fun getHome(page: Int, request: MainPageRequest): NiceResponse {
+        return if (request.name.contains("Anime"))
+            app.get("$animeUrl/index.php?cstart=$page&do=cat&category=${request.data}") else
+            app.get("$mainUrl/${request.data}/page/${if (request.data=="") page+1 else page}")
+    }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest
     ): HomePageResponse {
 
+        var home = getHome(page, request)
 
-        val home = when {
-            (request.data == "" && page == 1) -> app.get("$mainUrl/${request.data}/page/2")
-            (request.data == "manga-streaming-1") -> app.get("$animeUrl/${request.data}/page/$page")
-            else -> app.get("$mainUrl/${request.data}/page/$page")
+        // The site has rate limit enabled. Tries to counter.
+        while (home.document.selectFirst(".short") == null) {
+            home =getHome(page, request)
         }
 
         return newHomePageResponse(
@@ -76,14 +86,18 @@ class FrenchStreamProvider : MainAPI() {
 
 
     private fun toResult(post: Element): SearchResponse {
+
         val title = post.selectFirst(".short-title")?.text() ?: ""
         var url = post.selectFirst(".short-poster.img-box.with-mask")?.attr("href") ?: ""
         if (url.startsWith("/")) url = mainUrl + url
         var thumb = post.selectFirst("img")?.attr("src") ?: ""
         if (thumb.isEmpty() || thumb.startsWith("data:"))
             thumb = post.selectFirst("img")?.attr("data-src") ?: ""
-        val vfStatus = post.selectFirst(".film-version")?.text() ?: ""
-        val epiNum = post.selectFirst(".mli-eps i")?.text()?.toIntOrNull() ?: 0
+        val vfStatus = (post.selectFirst(".film-version") ?:
+            post.selectFirst(".film-verz"))?.text() ?: ""
+        val epiNum = post.selectFirst(".mli-eps")?.ownText()
+            ?.removeSurrounding("\"")?.trim()?.toIntOrNull()
+            ?: post.selectFirst(".mli-eps i")?.text()?.toIntOrNull() ?: 0
 
         return newAnimeSearchResponse(title, url, TvType.Movie) {
             this.posterUrl = thumb
@@ -108,10 +122,8 @@ class FrenchStreamProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
 
         val searchItems = fetchSearchResults(mainUrl, query) + fetchSearchResults(animeUrl, query)
-
         return searchItems.map { toResult(it) }
     }
-
     override suspend fun load(url: String): LoadResponse {
 
         // working with the new interface.
@@ -120,15 +132,20 @@ class FrenchStreamProvider : MainAPI() {
             data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
         ).document
 
-        val contentType = if (url.contains("/films/")) TvType.Movie else TvType.TvSeries
+
+
+        val contentType = if (url.contains("/films/")) TvType.Movie
+        else if (url.contains("french-manga.net")) TvType.Anime
+        else TvType.TvSeries
 
         val synopsis = if (contentType == TvType.TvSeries) doc.selectFirst(".fdesc")?.text()
             else doc.selectFirst("#s-desc")?.ownText()
         val infoContainer = doc.selectFirst("div.facts")
         val releaseYear = infoContainer?.selectFirst("span.release")
             ?.text()?.substringBefore("-")?.trim()
-        val genres = infoContainer?.selectFirst("span.genres")
-            ?.text()?.trim()?.split(",")?.map{ it.trim() }
+        val genres = (infoContainer?.selectFirst("span.genres")?.text()
+            ?: doc.selectFirst("#s-list")?.ownText())
+            ?.trim()?.split("${if (contentType == TvType.Anime) '-' else ','}")?.map{ it.trim() }
         val duration = infoContainer?.selectFirst("span.runtime")?.text()
             ?.trim()?.substringBefore(" ")
 
@@ -138,6 +155,34 @@ class FrenchStreamProvider : MainAPI() {
 
         val posterRegex = Regex("""url\((https?://\S+)\)""")
         val image = posterRegex.find(doc.toString())?.groupValues?.get(1)
+            ?: doc.selectFirst(".fposter img")?.attr("src") ?: ""
+
+        if (contentType == TvType.Anime) {
+            val episodes = mutableListOf<Episode>()
+            val versionContainers = doc.select(".elink")
+
+            // Version 1 for VF, 2 for VOSTFR. Seasons are separate card.
+            versionContainers.forEachIndexed { i, versionContainer ->
+                versionContainer.select("a").forEachIndexed { j, it ->
+                    val dataRel = it.attr("data-rel")
+                    if (dataRel.isNotEmpty())
+                        episodes += Episode(
+                            data = doc.selectFirst("#$dataRel")?.toString() ?: "",
+                            posterUrl = image,
+                            episode = j+1,
+                            season = i + 1,
+                        )
+                }
+
+            }
+
+            return newTvSeriesLoadResponse(title,url,TvType.TvSeries, episodes) {
+                this.posterUrl = image
+                this.plot = synopsis
+                this.tags = genres
+                addSeasonNames(listOf("VF","VOSTFR"))
+            }
+        }
 
 
         val vfEpisodes = mutableListOf<Episode>()
@@ -247,6 +292,12 @@ class FrenchStreamProvider : MainAPI() {
 
     }
 
+    private suspend fun extractVid(vidUrl : String) : String {
+        return if (vidUrl.contains("flixeo.xyz"))
+            app.head(vidUrl, allowRedirects = false).headers["Location"] ?: ""
+            else vidUrl
+    }
+
 
     override suspend fun loadLinks(
         data: String,
@@ -258,22 +309,27 @@ class FrenchStreamProvider : MainAPI() {
 
         if (!data.startsWith("[")) { // series
 
-            val sources = data.split(" ")
-
-            sources.forEach {
-
-                val vid = if (it.contains("flixeo.xyz"))
-                    app.head(it, allowRedirects = false).headers["Location"] ?: ""
-                    else it
-
-                loadExtractor(vid, subtitleCallback, callback)
+            if (data.contains("class=\"fstab\"")) { // Anime
+                Jsoup.parse(data).select(".fsctab").forEach {
+                    // create extractor kt
+                    val vidSrc = it.attr("href")
+                    loadExtractor(extractVid(vidSrc), subtitleCallback, callback)
+                }
             }
+
+            else {
+                val sources = data.split(" ")
+                sources.forEach {
+                    loadExtractor(extractVid(it), subtitleCallback, callback)
+                }
+            }
+
         }
 
-        else {
+        else { // Movie
             val urls = data.removeSurrounding("[", "]").split(", ").map { it.trim() }
             urls.forEach {
-                loadExtractor(it, subtitleCallback, callback)
+                loadExtractor(extractVid(it), subtitleCallback, callback)
             }
         }
 
