@@ -13,5 +13,6 @@ class FrenchStreamPlugin: Plugin() {
         registerExtractorAPI(Bf0skv())
         registerExtractorAPI(Fsvid())
         registerExtractorAPI(Lulustream2())
+        registerExtractorAPI(BigWrap())
     }
 }

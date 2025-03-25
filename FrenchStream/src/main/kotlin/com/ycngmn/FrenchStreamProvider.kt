@@ -73,7 +73,7 @@ class FrenchStreamProvider : MainAPI() {
         var home = getHome(page, request)
 
         // The site has rate limit enabled. Tries to counter.
-        while (home.document.selectFirst(".short") == null) {
+        while (!home.isSuccessful) {
             home =getHome(page, request)
         }
 
@@ -124,14 +124,26 @@ class FrenchStreamProvider : MainAPI() {
         val searchItems = fetchSearchResults(mainUrl, query) + fetchSearchResults(animeUrl, query)
         return searchItems.map { toResult(it) }
     }
+
+    private suspend fun loadReq (url: String) : NiceResponse {
+        return app.post(url,
+            headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
+            data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
+        )
+    }
+
     override suspend fun load(url: String): LoadResponse {
 
         // working with the new interface.
-        val doc =  app.post(url,
-            headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
-            data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
-        ).document
+        var req =  loadReq(url)
+        while (!req.isSuccessful) {
+            req = loadReq(url)
+        }
 
+        val doc = req.document
+
+        val title = doc.selectFirst("#s-title")?.ownText()
+            ?.removeSurrounding("\"")?.trim() ?: ""
 
 
         val contentType = if (url.contains("/films/")) TvType.Movie
@@ -149,8 +161,7 @@ class FrenchStreamProvider : MainAPI() {
         val duration = infoContainer?.selectFirst("span.runtime")?.text()
             ?.trim()?.substringBefore(" ")
 
-        val title = doc.selectFirst("#s-title")?.ownText()
-            ?.removeSurrounding("\"")?.trim() ?: ""
+
 
 
         val posterRegex = Regex("""url\((https?://\S+)\)""")

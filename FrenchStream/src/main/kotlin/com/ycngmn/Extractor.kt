@@ -17,6 +17,37 @@ class Bf0skv : Filesim() {
     override val mainUrl = "https://bf0skv.org"
 }
 
+open class BigWrap : ExtractorApi() {
+    override val name = "BigWrap"
+    override val mainUrl = "https://bigwarp.io"
+    override val requiresReferer = false
+
+    override suspend fun getUrl(
+        url: String,
+        referer: String?,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ) {
+
+
+        val soup = app.get(url, allowRedirects = true).text
+        val fileUrlRegex = Regex("""file:"(https?://[^"]+)"""")
+        val mp4Url = fileUrlRegex.find(soup)?.groupValues?.get(1)
+
+        callback.invoke(
+            ExtractorLink(
+                this.name,
+                this.name,
+                mp4Url ?: return,
+                "",
+                Qualities.Unknown.value,
+            )
+        )
+
+    }
+
+}
+
 open class Fsvid : ExtractorApi() {
     override val name = "Fsvid"
     override val mainUrl = "https://fsvid.lol"
