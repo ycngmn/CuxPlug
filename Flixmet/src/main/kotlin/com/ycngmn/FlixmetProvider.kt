@@ -13,6 +13,7 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newMovieLoadResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
@@ -108,12 +109,14 @@ class FlixmetProvider : MainAPI() {
                     val soup = app.get(season.attr("href")).document
                     val downloadUrl = soup.selectFirst("#download")?.select("a")?.last()?.attr("href")
 
-                    episodes += Episode(
-                        data = downloadUrl ?: "",
-                        name = season.text(),
-                        posterUrl = image,
-                        season = i,
-                    )
+                    episodes+= newEpisode(downloadUrl ?: "") {
+                        this.apply {
+                            name = season.text()
+                            posterUrl = image
+                            this.season = i
+
+                        }
+                    }
                 }
 
             }
@@ -156,24 +159,31 @@ class FlixmetProvider : MainAPI() {
         val allButtons = soup.select(".wp-block-button__link")
 
         var srcSlug = ""
+        val callbackContainer = mutableListOf<Pair<String, String>>()
 
-        for (button in allButtons.reversed()) {
+        for (button in allButtons) {
             when {
-                button.attr("href").isEmpty() -> { srcSlug = button.text(); continue }
+                button.attr("href").isEmpty() -> {
+                    srcSlug = button.text().removeSurrounding("\uD83D\uDC47")
+                    continue
+                }
                 !(button.attr("href").contains("filepress")
                         || button.attr("href").contains("gdtot")) ->
-                {
-                    callback.invoke(
-                        ExtractorLink(
-                            name,
-                            button.text() + "| $srcSlug",
-                            button.attr("href"),
-                            "",
-                            Qualities.Unknown.value
-                        )
-                    )
-                }
+                { callbackContainer += Pair(button.text() + "| $srcSlug", button.attr("href")) }
+
             }
+        }
+
+        for (callbackData in callbackContainer.reversed()) {
+            callback.invoke(
+                ExtractorLink(
+                    name,
+                    callbackData.first,
+                    callbackData.second,
+                    "",
+                    Qualities.Unknown.value
+                )
+            )
         }
 
         return true
