@@ -22,4 +22,5 @@ International plugins for [CloudStream](https://cloudstream.on.fleek.co) develop
 - [**AnimeSama**](https://anime-sama.fr): Anime-Sama est un site de référencement et de catalogage, créé par des passionnés de l’animation et du divertissement APAC.
 - [**StreamCloud**](https://streamcloud.my): Stream Filme Kostenlos Online anschauen Deutsch.
 - [**French-stream**](https://fstream.one): French Stream est un site qui va récupèrer les films et séries sur des plateformes comme Disney+, Netflix, Amazon Prime Video, HBO, Apple TV , Wakanim, Viki... et vous les proposer Gratuitement!
-- [**FreeDriveMovie**](https://freedrivemovie.com): Indian multi-lingual movies & TV shows
+- ~~[**FreeDriveMovie**]~~(https://freedrivemovie.com): Indian multi-lingual movies & TV shows.
+- [**Flixmet**](https://flixmet.com): Watch any movie worldwide including Hollywood, Bollywood and Bengali. PREFER DOWNLOAD THAN STREAMING!
