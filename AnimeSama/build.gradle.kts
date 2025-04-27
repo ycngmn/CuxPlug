@@ -22,8 +22,8 @@ cloudstream {
     requiresResources = true
     language = "fr"
 
-    // random cc logo i found
-    iconUrl = "https://media.cdnandroid.com/item_images/1415321/imagen-anime-sama-voiranime-vostfree-0ori.jpg"
+
+    iconUrl = "https://cdn.statically.io/gh/Anime-Sama/IMG/img/autres/logo.png"
 }
 
 android {

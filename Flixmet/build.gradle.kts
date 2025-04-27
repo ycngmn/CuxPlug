@@ -5,8 +5,8 @@ version = 1
 cloudstream {
     // All of these properties are optional, you can safely remove them
 
-    description = "Stream Filme Kostenlos Online anschauen Deutsch."
-    language = "de"
+    description = "Watch any movie worldwide including Hollywood, Bollywood and Bengali. PREFER DOWNLOAD THAN STREAMING!"
+    language = "bn"
     authors = listOf("ycngmn")
 
     /**
@@ -20,5 +20,6 @@ cloudstream {
 
     tvTypes = listOf("Movie","TvSeries")
 
-    iconUrl = "https://streamcloud.my/templates/streamcloud/images/newlogo.svg"
+
+    iconUrl = "https://flixmet.com/wp-content/uploads/2024/08/Flixmet.com-head-2.png"
 }
