@@ -12,11 +12,14 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newMovieLoadResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.jsoup.nodes.Element
 
 class StreamCloudProvider : MainAPI() {
@@ -108,13 +111,10 @@ class StreamCloudProvider : MainAPI() {
             // there are several sources but this one is probably easier to play.
             seasonContainers.forEachIndexed { i, seasonContainer ->
                 seasonContainer.select("a").filterNot { it.text()!= "Supervideo"}.forEach {
-                    episodes+= Episode(
-                        data = it.attr("href"),
-                        posterUrl = image,
-                        season = i+1
-
-
-                    )
+                    episodes+= newEpisode(data = it.attr("href")) {
+                        posterUrl = image
+                        season = i + 1
+                    }
                 }
 
             }
@@ -164,13 +164,11 @@ class StreamCloudProvider : MainAPI() {
 
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 name,
                 "Supervideo",
                 m3u8,
-                "",
-                0,
-                isM3u8 = true
+                type = ExtractorLinkType.M3U8
             )
         )
 

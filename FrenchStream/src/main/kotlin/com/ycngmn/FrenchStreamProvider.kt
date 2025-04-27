@@ -16,6 +16,7 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.getQualityFromString
 import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newAnimeSearchResponse
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -177,12 +178,12 @@ class FrenchStreamProvider : MainAPI() {
                 versionContainer.select("a").forEachIndexed { j, it ->
                     val dataRel = it.attr("data-rel")
                     if (dataRel.isNotEmpty())
-                        episodes += Episode(
-                            data = doc.selectFirst("#$dataRel")?.toString() ?: "",
-                            posterUrl = image,
-                            episode = j+1,
-                            season = i + 1,
-                        )
+                        episodes += newEpisode(
+                            data = doc.selectFirst("#$dataRel")?.toString() ?: "") {
+                            posterUrl = image
+                            episode = j + 1
+                            season = i + 1
+                        }
                 }
 
             }
@@ -224,23 +225,21 @@ class FrenchStreamProvider : MainAPI() {
 
                     if (sourceIndex == 0) {
 
-                        vfEpisodes += Episode(
-                            name = epiTitle,
-                            data = epiVF,
-                            posterUrl = epiImage,
-                            episode = epiIndex + 1,
-                            season = 1,
+                        vfEpisodes += newEpisode(data = epiVF) {
+                            name = epiTitle
+                            posterUrl = epiImage
+                            episode = epiIndex + 1
+                            season = 1
                             description = epiSynopsis
-                        )
+                        }
 
-                        voEpisodes += Episode(
-                            name = epiTitle,
-                            data = epiVO,
-                            posterUrl = epiImage,
-                            episode = epiIndex + 1,
-                            season = 2,
+                        voEpisodes += newEpisode(data = epiVO) {
+                            name = epiTitle
+                            posterUrl = epiImage
+                            episode = epiIndex + 1
+                            season = 2
                             description = epiSynopsis
-                        )
+                        }
                     }
                     else {
                         if (epiVF.isNotEmpty()) vfEpisodes[epiIndex].data += " $epiVF"
@@ -280,13 +279,12 @@ class FrenchStreamProvider : MainAPI() {
             for ((version, links) in sortedMJ)  {
                 index++
                 versionNames += version
-                movieEpisodes += Episode(
-                    data = links.toString(),
-                    name = "$title [$version]",
-                    posterUrl = image,
-                    season = index,
-                    episode = 1,
-                )
+                movieEpisodes += newEpisode(data = links.toString() ) {
+                    name = "$title [$version]"
+                    posterUrl = image
+                    season = index
+                    episode = 1
+                }
 
             }
 

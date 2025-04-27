@@ -3,7 +3,6 @@ package com.ycngmn
 
 
 import com.lagradost.cloudstream3.DubStatus
-import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.HomePageResponse
 import com.lagradost.cloudstream3.LoadResponse
@@ -17,11 +16,13 @@ import com.lagradost.cloudstream3.addEpisodes
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newAnimeLoadResponse
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.json.JSONObject
 import org.jsoup.Connection
 import org.jsoup.Jsoup
@@ -205,18 +206,19 @@ class AnizoneProvider : MainAPI() {
         val epiElms = doc.select("li[x-data]")
 
         val episodes = epiElms.map{ elt ->
-             Episode(
-            data = elt.selectFirst("a")?.attr("href") ?: "",
-            name = elt.selectFirst("h3")?.text()
-                ?.substringAfter(":")?.trim(),
-            season = 0,
-            posterUrl = elt.selectFirst("img")?.attr("src"),
-            date = elt.select("span.line-clamp-1").getOrNull(1)?.text()?.let {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    .parse(it)?.time
-            } ?: 0
+             newEpisode(
+            data = elt.selectFirst("a")?.attr("href") ?: "") {
+                 this.name = elt.selectFirst("h3")?.text()
+                     ?.substringAfter(":")?.trim()
+                 this.season = 0
+                 this.posterUrl = elt.selectFirst("img")?.attr("src")
+                 this.date = elt.select("span.line-clamp-1").getOrNull(1)?.text()?.let {
+                     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                         .parse(it)?.time
+                 } ?: 0
 
-        ) }
+             }
+        }
 
         return newAnimeLoadResponse(title, url, TvType.Anime) {
 
@@ -257,13 +259,11 @@ class AnizoneProvider : MainAPI() {
         }
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 sourceName,
                 name,
                 m3U8,
-                "",
-                Qualities.Unknown.value,
-                isM3u8 = true
+                type = ExtractorLinkType.M3U8
             )
         )
 

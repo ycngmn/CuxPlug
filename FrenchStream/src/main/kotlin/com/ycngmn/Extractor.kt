@@ -2,11 +2,12 @@ package com.ycngmn
 
 import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.extractors.Voe
 import com.lagradost.cloudstream3.extractors.Filesim
+import com.lagradost.cloudstream3.extractors.Voe
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 class MaxFinishSeveral : Voe() {
     override val mainUrl = "https://maxfinishseveral.com"
@@ -35,12 +36,10 @@ open class BigWrap : ExtractorApi() {
         val mp4Url = fileUrlRegex.find(soup)?.groupValues?.get(1)
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 this.name,
                 this.name,
                 mp4Url ?: return,
-                "",
-                Qualities.Unknown.value,
             )
         )
 
@@ -66,13 +65,11 @@ open class Fsvid : ExtractorApi() {
         val m3u8 = m3u8Regex.find(soup)?.groupValues?.getOrNull(1)
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 this.name,
                 this.name,
                 m3u8 ?: return,
-                "",
-                Qualities.Unknown.value,
-                isM3u8 = true
+                type = ExtractorLinkType.M3U8
             )
         )
     }

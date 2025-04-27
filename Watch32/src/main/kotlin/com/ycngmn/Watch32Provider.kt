@@ -12,11 +12,14 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newMovieLoadResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.json.JSONObject
 import org.jsoup.nodes.Element
 
@@ -146,10 +149,13 @@ class Watch32Provider : MainAPI() {
 
                 var numEpi = 0
                 episodes += web.select(".nav-item").map {
-                    Episode(
-                        "$mainUrl/ajax/episode/servers/${it.select("a").attr("data-id")}",
-                        it.text().split(":")[1], numSeason + 1, ++numEpi, posterUrl = coverImage
-                    )
+                    newEpisode(
+                        data = "$mainUrl/ajax/episode/servers/${it.select("a").attr("data-id")}") {
+                        name = it.text().split(":")[1]
+                        this.season = numSeason+1
+                        episode = ++numEpi
+                        posterUrl = coverImage
+                    }
                 }.toMutableList()
             }
         }
@@ -220,13 +226,11 @@ class Watch32Provider : MainAPI() {
             }
 
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     vidDataId.text(),
                     m3u8,
-                    "",
-                    0,
-                    isM3u8 = true
+                    type = ExtractorLinkType.M3U8
                 )
             )
         }

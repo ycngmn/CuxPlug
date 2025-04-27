@@ -19,7 +19,7 @@ import com.lagradost.cloudstream3.newMovieLoadResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.jsoup.nodes.Element
 
 class FlixmetProvider : MainAPI() {
@@ -176,12 +176,10 @@ class FlixmetProvider : MainAPI() {
 
         for (callbackData in callbackContainer.reversed()) {
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     callbackData.first,
                     callbackData.second,
-                    "",
-                    Qualities.Unknown.value
                 )
             )
         }

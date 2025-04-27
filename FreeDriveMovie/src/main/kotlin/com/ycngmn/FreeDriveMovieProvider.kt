@@ -14,6 +14,7 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newMovieLoadResponse
 import com.lagradost.cloudstream3.newMovieSearchResponse
@@ -22,6 +23,7 @@ import com.lagradost.cloudstream3.newTvSeriesSearchResponse
 import com.lagradost.cloudstream3.toRatingInt
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.json.JSONObject
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -156,16 +158,18 @@ class FreeDriveMovieProvider : MainAPI() {
             seasonContainers.forEachIndexed { i, seasonContainer ->
                 seasonContainer.select("li").forEachIndexed { j, it ->
                     val date = it.selectFirst(".date")?.text() ?: ""
-                    episodes += Episode(
+                    episodes += newEpisode(
                         data = it.selectFirst("a")
-                            ?.attr("href") ?: "",
-                        name = it.selectFirst("a")?.text(),
-                        posterUrl = it.selectFirst("img")?.attr("src"),
-                        date = SimpleDateFormat("MMM. dd, yyyy",
-                            Locale.ENGLISH).parse(date)?.time,
-                        episode = j+1,
-                        season = i + 1,
-                    )
+                            ?.attr("href") ?: "") {
+                        name = it.selectFirst("a")?.text()
+                        posterUrl = it.selectFirst("img")?.attr("src")
+                        this.date = SimpleDateFormat(
+                            "MMM. dd, yyyy",
+                            Locale.ENGLISH
+                        ).parse(date)?.time
+                        episode = j + 1
+                        season = i + 1
+                    }
                 }
 
             }
@@ -217,25 +221,21 @@ class FreeDriveMovieProvider : MainAPI() {
             val vidLink = req.selectFirst(".btn.btn-outline-success")?.attr("href")
 
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     "GDFlix",
                     vidLink ?: "",
-                    "",
-                    getQualityFromName(it.text())
-                )
+                ) { quality = getQualityFromName(it.text()) }
             )
         }
 
         doc.selectFirst(".wp-container-1")?.select("a")?.forEach {
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     "G-Drive Direct",
                     it.attr("href"),
-                    "",
-                    getQualityFromName(it.text())
-                )
+                ) { getQualityFromName(it.text()) }
             )
         }
 

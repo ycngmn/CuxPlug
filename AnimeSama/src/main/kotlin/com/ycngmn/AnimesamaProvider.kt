@@ -17,6 +17,7 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newAnimeLoadResponse
 import com.lagradost.cloudstream3.newAnimeSearchResponse
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
@@ -164,14 +165,14 @@ class AnimesamaProvider : MainAPI() {
                 if (datas!="") {
 
                     episodeList.add(
-                        Episode(
-                            data = datas,
-                            season = season,
-                            episode = i + 1,
-                            posterUrl = image,
-                            name = nom
-
-                        )
+                        newEpisode(datas) {
+                            this.apply {
+                                name = nom
+                                episode = i + 1
+                                posterUrl = image
+                                this.season = season
+                            }
+                        }
                     )
                 }
 
@@ -183,14 +184,15 @@ class AnimesamaProvider : MainAPI() {
                 }
                 if (datas!="") {
                     vfEpisodeList.add(
-                        Episode(
-                            data = datas,
-                            season = season,
-                            episode = i + 1,
-                            posterUrl = image,
-                            name = nom
 
-                        )
+                        newEpisode(datas) {
+                            this.apply {
+                                name = nom
+                                episode = i + 1
+                                posterUrl = image
+                                this.season = season
+                            }
+                        }
                     )
                 }
             }
@@ -205,7 +207,7 @@ class AnimesamaProvider : MainAPI() {
             this.synonyms = otherTitles
             addSeasonNames(seasonList)
             addEpisodes(DubStatus.Subbed, episodeList)
-            if ( vfEpisodeList.size>0 )
+            if (vfEpisodeList.isNotEmpty())
                 addEpisodes(DubStatus.Dubbed, vfEpisodeList)
 
         }
@@ -248,7 +250,7 @@ class AnimesamaProvider : MainAPI() {
             val epiKey = doc.selectFirst("#sousBlocMiddle script").toString()
             val re = Regex("""<script[^>]*src=['"]([^'"]*episodes\.js\?filever=\d+)['"][^>]*>""")
             val episodeKey = re.find(epiKey)?.groupValues?.get(1)
-            val rawLinks = app.get("$streamPage/$episodeKey",).text
+            val rawLinks = app.get("$streamPage/$episodeKey").text
             val reURL = """['"]https?://[^\s'"]+['"]""".toRegex()
             val urls = reURL.findAll(rawLinks)
                 .map { it.value.trim('\'', '"') }
