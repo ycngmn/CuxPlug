@@ -1,6 +1,7 @@
 {
   "name": "CuxPlug",
-  "description": "International plugins developped from interest and fun",
+  "iconUrl": "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/repo.png",
+  "description": "Plugins that sux",
   "manifestVersion": 1,
   "pluginLists": [
     "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/builds/plugins.json"
