@@ -1,9 +1,9 @@
 package com.ycngmn
 
-import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
-import com.lagradost.cloudstream3.plugins.Plugin
 import android.content.Context
 import com.lagradost.cloudstream3.extractors.Lulustream2
+import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
+import com.lagradost.cloudstream3.plugins.Plugin
 
 @CloudstreamPlugin
 class FrenchStreamPlugin: Plugin() {
@@ -12,6 +12,7 @@ class FrenchStreamPlugin: Plugin() {
         registerExtractorAPI(MaxFinishSeveral())
         registerExtractorAPI(Bf0skv())
         registerExtractorAPI(Fsvid())
+        registerExtractorAPI(Vidzy())
         registerExtractorAPI(Lulustream2())
         registerExtractorAPI(BigWrap())
     }

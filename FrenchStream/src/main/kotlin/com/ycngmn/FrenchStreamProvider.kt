@@ -31,7 +31,6 @@ import java.util.regex.Pattern
 
 class FrenchStreamProvider : MainAPI() {
 
-    // dynamically get mainUrl from https://fstream.one/ if unstable.
     override var mainUrl = "https://french-stream.pink"
     private val animeUrl = "https://w14.french-manga.net"
     override var name = "French-Stream"
@@ -49,42 +48,37 @@ class FrenchStreamProvider : MainAPI() {
 
     override val mainPage = mainPageOf(
         "films" to "Derniers Films",
-        "s-tv" to "Dernieres Séries",
+        "s-tv" to "Dernières Séries",
         "manga-streaming-1" to "Derniers Animes",
+        "films/top-film" to "Box Office Film",
+        "sries-du-moment" to "Box Office Série",
         "coups-de-cur" to "Coups de Cœur - Anime",
         "netflix-series-" to "Nouveautés NETFLIX",
         "series-apple-tv" to "Nouveautés Apple TV+",
         "series-disney-plus" to "Nouveautés Disney+",
-        "serie-amazon-prime-videos" to "Nouveautés Prime Video",
-        "sries-du-moment" to "Box Office Série",
-        "" to "Box Office Film"
+        "serie-amazon-prime-videos" to "Nouveautés Prime Video"
     )
 
-    //https://w14.french-manga.net/index.php?cstart=2&do=cat&category=manga-streaming-1
-
-    private suspend fun getHome(page: Int, request: MainPageRequest): NiceResponse {
-        return if (request.name.contains("Anime"))
-            app.get("$animeUrl/index.php?cstart=$page&do=cat&category=${request.data}") else
-            app.get("$mainUrl/${request.data}/page/${if (request.data=="") page+1 else page}")
-    }
+    private suspend fun getHome(page: Int, request: MainPageRequest): NiceResponse =
+         if (request.name.contains("Anime")) app.get("$animeUrl/index.php?cstart=$page&do=cat&category=${request.data}")
+         else app.get("$mainUrl/${request.data}/page/$page")
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest
     ): HomePageResponse {
 
         var home = getHome(page, request)
+        while (!home.isSuccessful) home = getHome(page, request)
 
-        // The site has rate limit enabled. Tries to counter.
-        while (!home.isSuccessful) {
-            home =getHome(page, request)
-        }
-
+        val results = home.document.select(".short").map { toResult(it) }
         return newHomePageResponse(
-            HomePageList(request.name,
-                home.document.select(".short").map { toResult(it) },
-                isHorizontalImages = false), hasNext = true
+            HomePageList(
+                request.name,
+                results,
+                isHorizontalImages = false
+            ),
+            hasNext = true
         )
     }
-
 
     private fun toResult(post: Element): SearchResponse {
 
@@ -121,13 +115,14 @@ class FrenchStreamProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-
         val searchItems = fetchSearchResults(mainUrl, query) + fetchSearchResults(animeUrl, query)
         return searchItems.map { toResult(it) }
     }
 
+    /** Enforce the the new interface*/
     private suspend fun loadReq (url: String) : NiceResponse {
-        return app.post(url,
+        return app.post(
+            url = url,
             headers = mapOf("content-type" to "application/x-www-form-urlencoded"),
             data = mapOf("skin_name" to "VFV2","action_skin_change" to "yes" )
         )
@@ -135,7 +130,6 @@ class FrenchStreamProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
 
-        // working with the new interface.
         var req =  loadReq(url)
         while (!req.isSuccessful) {
             req = loadReq(url)
@@ -162,9 +156,6 @@ class FrenchStreamProvider : MainAPI() {
         val duration = infoContainer?.selectFirst("span.runtime")?.text()
             ?.trim()?.substringBefore(" ")
 
-
-
-
         val posterRegex = Regex("""url\((https?://\S+)\)""")
         val image = posterRegex.find(doc.toString())?.groupValues?.get(1)
             ?: doc.selectFirst(".fposter img")?.attr("src") ?: ""
@@ -173,7 +164,6 @@ class FrenchStreamProvider : MainAPI() {
             val episodes = mutableListOf<Episode>()
             val versionContainers = doc.select(".elink")
 
-            // Version 1 for VF, 2 for VOSTFR. Seasons are separate card.
             versionContainers.forEachIndexed { i, versionContainer ->
                 versionContainer.select("a").forEachIndexed { j, it ->
                     val dataRel = it.attr("data-rel")
@@ -259,8 +249,6 @@ class FrenchStreamProvider : MainAPI() {
                 this.year = releaseYear?.toIntOrNull()
                 addSeasonNames(listOf("VF","VOSTFR"))
 
-
-
             }
         }
 
@@ -272,7 +260,6 @@ class FrenchStreamProvider : MainAPI() {
 
             val sortedMJ = sortUrls(movieJson)
 
-            // maybe i made it a bit complex. Would have been nicer if could be transformed to "Track/ Piste". "A Big Maybe"
             val movieEpisodes = mutableListOf<Episode>()
             val versionNames = mutableListOf<String>()
             var index = 0
@@ -295,7 +282,6 @@ class FrenchStreamProvider : MainAPI() {
                 this.duration = duration?.toIntOrNull()
                 this.year = releaseYear?.toIntOrNull()
                 addSeasonNames(versionNames)
-
             }
         }
 
@@ -315,37 +301,31 @@ class FrenchStreamProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
 
-
-        if (!data.startsWith("[")) { // series
-
-            if (data.contains("class=\"fstab\"")) { // Anime
-                Jsoup.parse(data).select(".fsctab").forEach {
-                    // create extractor kt
-                    val vidSrc = it.attr("href")
-                    loadExtractor(extractVid(vidSrc), subtitleCallback, callback)
-                }
-            }
-
-            else {
-                val sources = data.split(" ")
-                sources.forEach {
-                    loadExtractor(extractVid(it), subtitleCallback, callback)
-                }
-            }
-
+        val tvType = when {
+            data.startsWith("[") && data.contains("class=\"fstab\"")  -> TvType.Anime
+            data.startsWith("[") -> TvType.TvSeries
+            else -> TvType.Movie
         }
 
-        else { // Movie
-            val urls = data.removeSurrounding("[", "]").split(", ").map { it.trim() }
-            urls.forEach {
-                loadExtractor(extractVid(it), subtitleCallback, callback)
-            }
+        val urls = when(tvType) {
+            TvType.Anime -> Jsoup.parse(data).select(".fsctab").map { it.attr("href")  }
+            TvType.TvSeries -> data.split(" ")
+            TvType.Movie -> data.removeSurrounding("[", "]").split(", ").map { it.trim() }
+            else -> emptyList()
+        }
+
+        urls.forEach {
+            loadExtractor(
+                extractVid(it),
+                subtitleCallback,
+                callback
+            )
         }
 
         return true
     }
 
-    // Sort urls by their type.
+    /** Sort movie urls by their version name */
     private fun sortUrls (movieJson: JSONObject) : MutableMap<String,MutableList<String>> {
 
         val groupedUrls = mutableMapOf<String, MutableList<String>>()
