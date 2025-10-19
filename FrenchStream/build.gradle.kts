@@ -8,6 +8,6 @@ cloudstream {
     authors = listOf("ycngmn")
 
     status = 1 // 0: Down | 1: Ok
-    tvTypes = listOf("Movie","TvSeries")
+    tvTypes = listOf("Movie","TvSeries", "Anime")
     iconUrl = "https://iili.io/K8AbMcx.jpg"
 }

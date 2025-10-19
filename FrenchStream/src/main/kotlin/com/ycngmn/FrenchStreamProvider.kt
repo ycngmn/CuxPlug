@@ -187,10 +187,10 @@ class FrenchStreamProvider : MainAPI() {
         }
 
 
-        val vfEpisodes = mutableListOf<Episode>()
-        val voEpisodes = mutableListOf<Episode>()
-
         if (contentType == TvType.TvSeries) {
+
+            val vfEpisodes = mutableListOf<Episode>()
+            val voEpisodes = mutableListOf<Episode>()
 
             val episodeLists = doc.select("script[type=\"text/template\"]")
                 .map { Jsoup.parse(it.data()) }
@@ -301,17 +301,10 @@ class FrenchStreamProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
 
-        val tvType = when {
-            data.startsWith("[") && data.contains("class=\"fstab\"")  -> TvType.Anime
-            data.startsWith("[") -> TvType.TvSeries
-            else -> TvType.Movie
-        }
-
-        val urls = when(tvType) {
-            TvType.Anime -> Jsoup.parse(data).select(".fsctab").map { it.attr("href")  }
-            TvType.TvSeries -> data.split(" ")
-            TvType.Movie -> data.removeSurrounding("[", "]").split(", ").map { it.trim() }
-            else -> emptyList()
+        val urls = when {
+            data.startsWith("[") -> data.removeSurrounding("[", "]").split(", ").map { it.trim() }
+            data.contains("class=\"fstab\"") -> Jsoup.parse(data).select(".fsctab").map { it.attr("href")  }
+            else -> data.split(" ")
         }
 
         urls.forEach {

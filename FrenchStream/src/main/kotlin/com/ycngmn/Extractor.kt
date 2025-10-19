@@ -75,7 +75,7 @@ open class Fsvid : ExtractorApi() {
 
 open class Vidzy : ExtractorApi() {
     override val name = "Vidzy"
-    override val mainUrl = "https://vidzy.org/"
+    override val mainUrl = "https://vidzy.org"
     override val requiresReferer = false
 
     override suspend fun getUrl(
@@ -101,7 +101,7 @@ open class Vidzy : ExtractorApi() {
 private fun getPackedM3u8(doc: Document): String? {
     val packedData = doc.selectFirst("script:containsData(function(p,a,c,k,e,d))")?.data().toString()
     return JsUnpacker(packedData).unpack()?.let {
-        val m3u8Regex = """file:\s*"([^"]+\.m3u8[^"]*)"""".toRegex()
+        val m3u8Regex = """(?:file|src)\s*:\s*"([^"]+\.m3u8[^"]*)"""".toRegex()
         m3u8Regex.find(it)?.groupValues?.getOrNull(1)
     }
 }
