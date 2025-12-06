@@ -26,7 +26,7 @@ import org.jsoup.nodes.Element
 
 class AnimesamaProvider : MainAPI() {
 
-    override var mainUrl = "https://anime-sama.org"
+    override var mainUrl = "https://anime-sama.eu"
     override var name = "Anime-sama"
     override val supportedTypes = setOf(
         TvType.Anime,
@@ -234,7 +234,7 @@ class AnimesamaProvider : MainAPI() {
      * @param streamPage The AnimeSama URL to scrape from.
      * Example:
      * ```
-     * https://anime-sama.org/catalogue/anime-name/saison0/vostfr/
+     * https://anime-sama.eu/catalogue/anime-name/saison0/vostfr/
      * ```
      * @return A map containing pairs of sources and their corresponding lists of stream links,
      *         or an empty list if no match is found.
