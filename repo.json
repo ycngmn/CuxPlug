@@ -1,7 +1,7 @@
 {
   "name": "CuxPlug",
   "iconUrl": "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/repo.jpg",
-  "description": "Plugins that sux",
+  "description": "cool extensions for CloudStream",
   "manifestVersion": 1,
   "pluginLists": [
     "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/builds/plugins.json"

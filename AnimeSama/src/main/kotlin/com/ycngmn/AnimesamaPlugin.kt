@@ -7,6 +7,6 @@ import android.content.Context
 @CloudstreamPlugin
 class AnimesamaPlugin: Plugin() {
     override fun load(context: Context) {
-        registerMainAPI(AnimesamaProvider())
+        registerMainAPI(AnimeSamaProvider())
     }
 }

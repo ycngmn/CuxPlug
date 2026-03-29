@@ -23,7 +23,7 @@ cloudstream {
     language = "fr"
 
 
-    iconUrl = "https://cdn.statically.io/gh/Anime-Sama/IMG/img/autres/logo.png"
+    iconUrl = "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/anime-sama.png"
 }
 
 android {

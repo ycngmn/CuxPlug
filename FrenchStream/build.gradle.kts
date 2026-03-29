@@ -3,11 +3,11 @@ version = 8
 
 cloudstream {
 
-    description = "French Stream est un site qui va récupèrer les films et séries sur des plateformes comme Disney+, Netflix, Amazon Prime Video, HBO, Apple TV , Wakanim, Viki... et vous les proposer Gratuitement!"
+    description = "French Stream récupère les films et séries et vous les propose Gratuitement!"
     language = "fr"
     authors = listOf("ycngmn")
 
     status = 1 // 0: Down | 1: Ok
     tvTypes = listOf("Movie","TvSeries", "Anime")
-    iconUrl = "https://iili.io/K8AbMcx.jpg"
+    iconUrl = "https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/icons/french-stream.jpg"
 }

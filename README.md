@@ -1,13 +1,18 @@
-[DMCA notice](https://github.com/ycngmn/CuxPlug/blob/main/DMCA-notice.md)
-
----
 # CuxPlug
-International plugins for [CloudStream](https://cloudstream.on.fleek.co) developed from fun and interest
+Plugins for [CloudStream](https://cloudstream.on.fleek.co)
 
----
+
+>[!WARNING]
+>We hereby issue this notice to inform you that these extensions just function like an ordinary browser (*like your browser*) that fetch video files from internet, and do not violate the provisions of the Digital Millennium Copyright Act (DMCA). The Content these extensions may access is not hosted by us or the [CloudStream3](https://cloudstream.on.fleek.co) application but the websites they are browsing in their autonomous mode. It is sole responsibility of the user and his/her countries' or states' law. If you think they are violating any intellectual property then please contact the actual file hosts not the owners of this repository or the [CloudStream3](https://cloudstream.on.fleek.co) app
+
 ## Installation
-### [Automatic](https://self-similarity.github.io/http-protocol-redirector?r=cloudstreamrepo://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json)
-### Manual
+
+#### Automatic
+* Install **CloudStream**
+* [Click here](https://self-similarity.github.io/http-protocol-redirector?r=cloudstreamrepo://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json)
+
+#### Manual
+On cloudStream app :
 - Navigate
     - Settings
     - extensions
@@ -17,10 +22,6 @@ International plugins for [CloudStream](https://cloudstream.on.fleek.co) develop
     - direct-link: `https://raw.githubusercontent.com/ycngmn/CuxPlug/refs/heads/main/repo.json`
 ---
 ## Extensions
-- [**Watch32**](https://watch32.sx): Watch32 is a Free Movies streaming site with over 10000 movies and TV-Series.
-- [**AniZone**](https://anizone.to): Anizone.to is a website with no about us section but hey, there are anime.
-- [**AnimeSama**](https://anime-sama.tv): Anime-Sama est un site de référencement et de catalogage, créé par des passionnés de l’animation et du divertissement APAC.
-- [**StreamCloud**](https://streamcloud.my): Stream Filme Kostenlos Online anschauen Deutsch.
-- [**French-stream**](https://fstream.one): French Stream est un site qui va récupèrer les films et séries sur des plateformes comme Disney+, Netflix, Amazon Prime Video, HBO, Apple TV , Wakanim, Viki... et vous les proposer Gratuitement!
-- ~~[**FreeDriveMovie**](https://freedrivemovie.com)~~: Indian multi-lingual movies & TV shows.
-- [**Flixmet**](https://flixmet.com): Watch any movie worldwide including Hollywood, Bollywood and Bengali. PREFER DOWNLOAD THAN STREAMING!
+- [**AniZone**](https://anizone.to)
+- [**AnimeSama**](https://anime-sama.tv)
+- [**French-stream**](https://fstream.one)

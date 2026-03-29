@@ -24,10 +24,9 @@ import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.nodes.Element
 
 
-class AnimesamaProvider : MainAPI() {
-
+class AnimeSamaProvider : MainAPI() {
     override var mainUrl = "https://anime-sama.tv"
-    override var name = "Anime-sama"
+    override var name = "Anime Sama"
     override val supportedTypes = setOf(
         TvType.Anime,
         TvType.AnimeMovie
@@ -38,178 +37,168 @@ class AnimesamaProvider : MainAPI() {
     override val hasQuickSearch = true
 
     override val mainPage = mainPageOf(
-        "1" to "Derniers épisodes ajoutés",
-        "2" to "Derniers contenus sortis",
-        "3" to "Les classiques",
-        "4" to "Découvrez des pépites",
+        ".fadeJours a" to "Sorties du jour",
+        "#containerAjoutsAnimes a" to "Derniers épisodes ajoutés",
+        "#containerSorties a" to "Derniers contenus sortis",
+        "#containerClassiques a" to "Les classiques",
+        "#containerPepites a" to "Découvrez des pépites",
     )
 
     override suspend fun getMainPage(
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val doc = app.get(mainUrl, cacheTime = 60).document
-
-        val query = when (request.data) {
-            "1" -> "#containerAjoutsAnimes a"
-            "2" -> "#containerSorties a"
-            "3" -> "#containerClassiques a"
-            "4" -> "#containerPepites a"
-            else -> ""
-        }
-        val home = doc.select(query).mapNotNull { toResult(it) }
+        val doc = app.get(mainUrl).document
+        val items = doc.select(request.data)
+            .mapNotNull { toResult(it) }
 
         return newHomePageResponse(
-            HomePageList(request.name, home, isHorizontalImages = true),
-            false
+            HomePageList(
+                request.name,
+                items,
+                isHorizontalImages = true
+            ),
+            hasNext = false
         )
     }
 
-
     private fun toResult(post: Element): SearchResponse {
-        var title = post.selectFirst("h1")?.text() ?: ""
-        if (title == "")
-            title = post.selectFirst("h3")?.text() ?: ""
-        var url = post.selectFirst("a")?.attr("href") ?: ""
-        url = if (url.split("/").size > 5) url.split("/").take(5).joinToString("/")
-        else url
-        return newAnimeSearchResponse(title, url, TvType.Anime) {
-            this.posterUrl = post.selectFirst("img")
-                ?.attr("src")
+        val title = post.selectFirst(".card-title")?.text() ?: ""
 
+        val url = (post.selectFirst("a")?.attr("href") ?: "")
+            .split("/").take(5).joinToString("/")
+
+        return newAnimeSearchResponse(title, url, TvType.Anime) {
+            posterUrl = post.selectFirst("img")?.attr("src")
         }
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
         val doc = app.post(
             "$mainUrl/template-php/defaut/fetch.php",
-            data = mapOf("query" to query),
-            cacheTime = 60
+            data = mapOf("query" to query)
         ).document
+
         return doc.select("a").mapNotNull { toResult(it) }
     }
 
     override suspend fun load(url: String): LoadResponse {
+        val doc = app.get(url).document
+        val title = doc.selectFirst("#titreOeuvre")?.text() ?: ""
+        val otherTitles = doc.selectFirst("#titreAlter")?.text()
+            ?.split(",")?.map { it.trim() } ?: listOf()
 
-
-        val doc = app.get(url, cacheTime = 60).document
-        val title = doc.selectFirst("h4#titreOeuvre")?.text()
-            ?: throw NotImplementedError("Unable to find title")
-        val otherTitles =
-            doc.selectFirst("#titreAlter")?.text()?.split(",")?.map { it.trim() } ?: listOf()
         val image = doc.selectFirst("#coverOeuvre")?.attr("src")
-        val tags =
-            doc.selectFirst("a.text-sm.text-gray-300.mt-2")?.text()?.split(",")?.map { it.trim() }
-                ?: listOf()
+        val tags = doc.selectFirst("a.text-sm.text-gray-300.mt-2")?.text()
+            ?.split(",")?.map { it.trim() } ?: listOf()
         val synopsis = doc.selectFirst("p.text-sm.text-gray-400.mt-2")?.text() ?: ""
 
         // Pair of ( seasonName : href )
-        val rawSeasonData =
-            doc.selectFirst("div.flex.flex-wrap.overflow-y-hidden.justify-start.bg-slate-900.bg-opacity-70.rounded.mt-2.h-auto script")
-                ?.toString() ?: ""
+        val rawSeasonSelector = "div.flex.flex-wrap.overflow-y-hidden.justify-start.bg-slate-900.bg-opacity-70.rounded.mt-2.h-auto script"
+        val rawSeasonData = doc.selectFirst(rawSeasonSelector)?.toString() ?: ""
         val extractedData = rawSeasonData.split("/*", "*/")[2]
         val pattern = Regex("""panneauAnime\("([^"]+)",\s*"([^"]+)"\);""")
-        val panneauMap = mutableMapOf<String, String>()
-        pattern.findAll(extractedData).forEach {
+
+        val panneauMap = pattern.findAll(extractedData).map {
             val season = it.groupValues[1]
             val alias = it.groupValues[2]
-            panneauMap[season] = alias
+            season to alias
         }
 
-        val seasonList = mutableListOf<SeasonData>()
-        var index = 1
-        panneauMap.forEach { (season, _) ->
-            seasonList.add(SeasonData(index, season))
-            index++
+        val seasonList: List<SeasonData> = buildList {
+            panneauMap.forEachIndexed { index, (season, _) ->
+                add(SeasonData(index + 1, season))
+            }
         }
 
-        var season = 1
         val episodeList = mutableListOf<Episode>()
         val vfEpisodeList = mutableListOf<Episode>()
 
-        panneauMap.forEach { (seasonName, alias) ->
-            val streamPage = "$url/$alias"
+        panneauMap.forEachIndexed { seasonIndex, (seasonName, slug) ->
+            val streamPage = "$url/$slug"
             val urlTransforme = streamPage.removeSuffix("/").split("/").toMutableList()
 
             var asSources : Map<String, List<String>> = mapOf()
             val asSourcesVF : Map<String, List<String>>
 
             if (urlTransforme[urlTransforme.size - 1] != "vf") {
-                asSources = retreiveSrcs(streamPage)
+                asSources = extractStreamLinks(streamPage)
                 urlTransforme[urlTransforme.size - 1] = "vf"
                 val vfPage = urlTransforme.joinToString("/")
-                asSourcesVF = retreiveSrcs(vfPage)
-
+                asSourcesVF = extractStreamLinks(vfPage)
             } else {
-                asSourcesVF = retreiveSrcs(streamPage)
+                asSourcesVF = extractStreamLinks(streamPage)
             }
 
             val maxNbEpisodes = asSources.values.maxOfOrNull { it.size }
                 ?: asSourcesVF.values.maxOfOrNull { it.size } ?: 0
 
 
-            for (i in 0 until maxNbEpisodes) {
+            for (episodeIndex in 0 until maxNbEpisodes) {
 
                 val nom = when {
-                    seasonName.contains("Saison") -> "$title S${season}EP${(i + 1).toString().padStart(2, '0')}"
-                    seasonName in listOf("Film", "OAV", "Films") -> "$title $seasonName ${i + 1}"
-                    else -> "$title ${i + 1}"
+                    seasonName.contains("Saison") -> "$title S${seasonIndex + 1}EP${(episodeIndex + 1).toString().padStart(2, '0')}"
+                    seasonName in listOf("Film", "OAV", "Films") -> "$title $seasonName ${episodeIndex + 1}"
+                    else -> "$title ${episodeIndex + 1}"
                 }
 
-                var datas = ""
-                for ((_,link) in asSources) {
-                    if (i < link.size)
-                        datas += " " + link[i]
+
+                val datas = buildString {
+                    for ((_,link) in asSources) {
+                        if (episodeIndex < link.size) {
+                            append(link[episodeIndex])
+                            append(" ")
+                        }
+                    }
                 }
 
-                if (datas!="") {
-
+                if (datas.isNotEmpty()) {
                     episodeList.add(
                         newEpisode(datas) {
                             this.apply {
                                 name = nom
-                                episode = i + 1
+                                episode = episodeIndex + 1
                                 posterUrl = image
-                                this.season = season
+                                this.season = seasonIndex + 1
                             }
                         }
                     )
                 }
 
-
-                datas = ""
-                for ((_,link) in asSourcesVF) {
-                    if (i < link.size){
-                        datas += " " + link[i] }
+                val datas2 = buildString {
+                    for ((_,link) in asSourcesVF) {
+                        if (episodeIndex < link.size) {
+                            append(link[episodeIndex])
+                            append(" ")
+                        }
+                    }
                 }
-                if (datas!="") {
-                    vfEpisodeList.add(
 
-                        newEpisode(datas) {
-                            this.apply {
-                                name = nom
-                                episode = i + 1
-                                posterUrl = image
-                                this.season = season
-                            }
+                if (datas2.isNotEmpty()) {
+                    vfEpisodeList.add(
+                        newEpisode(datas2) {
+                            name = nom
+                            episode = episodeIndex + 1
+                            posterUrl = image
+                            season = seasonIndex + 1
                         }
                     )
                 }
             }
-            season++
         }
 
         return newAnimeLoadResponse(title, url, TvType.Anime) {
-
-            this.posterUrl = image
-            this.plot = synopsis
+            posterUrl = image
+            plot = synopsis
+            synonyms = otherTitles
             this.tags = tags
-            this.synonyms = otherTitles
+
             addSeasonNames(seasonList)
             addEpisodes(DubStatus.Subbed, episodeList)
-            if (vfEpisodeList.isNotEmpty())
-                addEpisodes(DubStatus.Dubbed, vfEpisodeList)
 
+            if (vfEpisodeList.isNotEmpty()) {
+                addEpisodes(DubStatus.Dubbed, vfEpisodeList)
+            }
         }
     }
 
@@ -220,62 +209,44 @@ class AnimesamaProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
 
-        val links = data.removePrefix(" ").split(" ")
+        val links = data.trim().split(" ")
 
-        for (link in links)
-            loadExtractor(link, subtitleCallback, callback)
+        for (link in links) {
+            loadExtractor(
+                link,
+                subtitleCallback,
+                callback
+            )
+        }
 
         return true
     }
 
-    /**
-     * Extracts the stream host and episode URLs from AnimeSama stream pages.
-     *
-     * @param streamPage The AnimeSama URL to scrape from.
-     * Example:
-     * ```
-     * https://anime-sama.tv/catalogue/anime-name/saison0/vostfr/
-     * ```
-     * @return A map containing pairs of sources and their corresponding lists of stream links,
-     *         or an empty list if no match is found.
-     */
-
-    private suspend fun retreiveSrcs(streamPage: String): Map<String, List<String>> {
+    private suspend fun extractStreamLinks(streamPage: String): Map<String, List<String>> {
 
         val request = app.get(streamPage)
 
-        if (request.isSuccessful) {
+        if (!request.isSuccessful) return mapOf()
 
-            val doc = request.document
-            val epiKey = doc.selectFirst("#sousBlocMiddle script").toString()
-            val re = Regex("""<script[^>]*src=['"]([^'"]*episodes\.js\?filever=\d+)['"][^>]*>""")
-            val episodeKey = re.find(epiKey)?.groupValues?.get(1)
-            val rawLinks = app.get("$streamPage/$episodeKey").text
-            val reURL = """['"]https?://[^\s'"]+['"]""".toRegex()
-            val urls = reURL.findAll(rawLinks)
-                .map { it.value.trim('\'', '"') }
-                .toList()
+        val doc = request.document
+        val epiKey = doc.selectFirst("#sousBlocMiddle script").toString()
+        val re = Regex("""<script[^>]*src=['"]([^'"]*episodes\.js\?filever=\d+)['"][^>]*>""")
+        val episodeKey = re.find(epiKey)?.groupValues?.get(1)
+        val rawLinks = app.get("$streamPage/$episodeKey").text
+        val reURL = """['"]https?://[^\s'"]+['"]""".toRegex()
+        val urls = reURL.findAll(rawLinks)
+            .map { it.value.trim('\'', '"') }
+            .toList()
 
-            return urls.groupBy { url ->
-                when {
-                    // here I listed the providers I crossed in AS.
-
-                    url.contains("sibnet.ru") -> "Sibnet"
-                    url.contains("vidmoly.to") -> "Vidmoly"
-                    url.contains("oneupload.to") -> "Oneupload"
-                    url.contains("sendvid.com") -> "Sendvid"
-                    url.contains("vk.com") -> "Vk"
-
-
-                    else -> "Other"
-                }
+        return urls.groupBy { url ->
+            when {
+                url.contains("sibnet.ru") -> "Sibnet"
+                url.contains("vidmoly.to") -> "Vidmoly"
+                url.contains("oneupload.to") -> "Oneupload"
+                url.contains("sendvid.com") -> "Sendvid"
+                url.contains("vk.com") -> "Vk"
+                else -> "Other"
             }
-
         }
-
-        return mapOf()
-
     }
 }
-
-

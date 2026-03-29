@@ -81,7 +81,7 @@ subprojects {
         // https://github.com/recloudstream/cloudstream/blob/master/app/build.gradle.kts
         implementation(kotlin("stdlib")) // Adds Standard Kotlin Features
         implementation("com.github.Blatzar:NiceHttp:0.4.11") // HTTP Lib
-        implementation("org.jsoup:jsoup:1.21.2") // HTML Parser
+        implementation("org.jsoup:jsoup:1.22.1") // HTML Parser
     }
 }
 
