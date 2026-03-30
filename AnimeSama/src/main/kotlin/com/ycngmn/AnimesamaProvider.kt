@@ -1,5 +1,6 @@
 package com.ycngmn
 
+import android.util.Log
 import com.lagradost.cloudstream3.DubStatus
 import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
@@ -25,7 +26,7 @@ import org.jsoup.nodes.Element
 
 
 class AnimeSamaProvider : MainAPI() {
-    override var mainUrl = "https://anime-sama.tv"
+    override var mainUrl = "https://anime-sama.to"
     override var name = "Anime Sama"
     override val supportedTypes = setOf(
         TvType.Anime,
@@ -37,7 +38,6 @@ class AnimeSamaProvider : MainAPI() {
     override val hasQuickSearch = true
 
     override val mainPage = mainPageOf(
-        ".fadeJours a" to "Sorties du jour",
         "#containerAjoutsAnimes a" to "Derniers épisodes ajoutés",
         "#containerSorties a" to "Derniers contenus sortis",
         "#containerClassiques a" to "Les classiques",
@@ -64,9 +64,19 @@ class AnimeSamaProvider : MainAPI() {
 
     private fun toResult(post: Element): SearchResponse {
         val title = post.selectFirst(".card-title")?.text() ?: ""
+        val slug = (post.selectFirst("a")?.attr("href") ?: "")
+            .trim('/').split("/").take(2).joinToString("/")
 
-        val url = (post.selectFirst("a")?.attr("href") ?: "")
-            .split("/").take(5).joinToString("/")
+        val url = "$mainUrl/$slug"
+
+        return newAnimeSearchResponse(title, url, TvType.Anime) {
+            posterUrl = post.selectFirst("img")?.attr("src")
+        }
+    }
+
+    private fun toSearchResult(post: Element): SearchResponse {
+        val title = post.selectFirst(".asn-search-result-title")?.text() ?: ""
+        val url = post.selectFirst("a")?.attr("href") ?: ""
 
         return newAnimeSearchResponse(title, url, TvType.Anime) {
             posterUrl = post.selectFirst("img")?.attr("src")
@@ -79,7 +89,11 @@ class AnimeSamaProvider : MainAPI() {
             data = mapOf("query" to query)
         ).document
 
-        return doc.select("a").mapNotNull { toResult(it) }
+        return doc.select("a").mapNotNull { toSearchResult(it) }
+    }
+
+    override suspend fun quickSearch(query: String): List<SearchResponse> {
+        return search(query)
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -96,7 +110,9 @@ class AnimeSamaProvider : MainAPI() {
         // Pair of ( seasonName : href )
         val rawSeasonSelector = "div.flex.flex-wrap.overflow-y-hidden.justify-start.bg-slate-900.bg-opacity-70.rounded.mt-2.h-auto script"
         val rawSeasonData = doc.selectFirst(rawSeasonSelector)?.toString() ?: ""
-        val extractedData = rawSeasonData.split("/*", "*/")[2]
+
+        val extractedData = rawSeasonData.split("\n").drop(1).joinToString()
+
         val pattern = Regex("""panneauAnime\("([^"]+)",\s*"([^"]+)"\);""")
 
         val panneauMap = pattern.findAll(extractedData).map {
@@ -116,35 +132,41 @@ class AnimeSamaProvider : MainAPI() {
 
         panneauMap.forEachIndexed { seasonIndex, (seasonName, slug) ->
             val streamPage = "$url/$slug"
-            val urlTransforme = streamPage.removeSuffix("/").split("/").toMutableList()
 
-            var asSources : Map<String, List<String>> = mapOf()
-            val asSourcesVF : Map<String, List<String>>
+            val urlTransform = streamPage.removeSuffix("/").split("/")
+            val isVF = urlTransform.last() == "vf"
 
-            if (urlTransforme[urlTransforme.size - 1] != "vf") {
-                asSources = extractStreamLinks(streamPage)
-                urlTransforme[urlTransforme.size - 1] = "vf"
-                val vfPage = urlTransforme.joinToString("/")
-                asSourcesVF = extractStreamLinks(vfPage)
+            val sourcesVF = if (isVF) {
+                extractStreamLinks(streamPage)
             } else {
-                asSourcesVF = extractStreamLinks(streamPage)
+                val vfPage = urlTransform.toMutableList().apply {
+                    this[urlTransform.lastIndex] = "vf"
+                }.joinToString("/")
+                extractStreamLinks(vfPage)
             }
 
-            val maxNbEpisodes = asSources.values.maxOfOrNull { it.size }
-                ?: asSourcesVF.values.maxOfOrNull { it.size } ?: 0
+            val sourcesVO = if (!isVF) extractStreamLinks(streamPage) else emptyMap()
+
+
+            val maxNbEpisodes = sourcesVO.values.maxOfOrNull { it.size }
+                ?: sourcesVF.values.maxOfOrNull { it.size } ?: 0
 
 
             for (episodeIndex in 0 until maxNbEpisodes) {
 
                 val nom = when {
-                    seasonName.contains("Saison") -> "$title S${seasonIndex + 1}EP${(episodeIndex + 1).toString().padStart(2, '0')}"
-                    seasonName in listOf("Film", "OAV", "Films") -> "$title $seasonName ${episodeIndex + 1}"
+                    seasonName.contains("Saison") -> {
+                        val episodeString = (episodeIndex + 1).toString().padStart(2, '0')
+                        "$title S${seasonIndex + 1}EP$episodeString"
+                    }
+                    seasonName in listOf("Film", "OAV", "Films") ->
+                        "$title $seasonName ${episodeIndex + 1}"
                     else -> "$title ${episodeIndex + 1}"
                 }
 
 
                 val datas = buildString {
-                    for ((_,link) in asSources) {
+                    for ((_,link) in sourcesVO) {
                         if (episodeIndex < link.size) {
                             append(link[episodeIndex])
                             append(" ")
@@ -166,7 +188,7 @@ class AnimeSamaProvider : MainAPI() {
                 }
 
                 val datas2 = buildString {
-                    for ((_,link) in asSourcesVF) {
+                    for ((_,link) in sourcesVF) {
                         if (episodeIndex < link.size) {
                             append(link[episodeIndex])
                             append(" ")
@@ -241,6 +263,7 @@ class AnimeSamaProvider : MainAPI() {
         return urls.groupBy { url ->
             when {
                 url.contains("sibnet.ru") -> "Sibnet"
+                url.contains("embed4me.com") -> "Embed4Me"
                 url.contains("vidmoly.to") -> "Vidmoly"
                 url.contains("oneupload.to") -> "Oneupload"
                 url.contains("sendvid.com") -> "Sendvid"
